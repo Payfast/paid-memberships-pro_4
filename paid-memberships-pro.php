@@ -3,7 +3,7 @@
 Plugin Name: Paid Memberships Pro
 Plugin URI: http://www.paidmembershipspro.com
 Description: Plugin to Handle Memberships
-Version: 1.7.8.2
+Version: 1.7.9.1
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 */
@@ -13,7 +13,7 @@ Author URI: http://www.strangerstudios.com
 */
 
 //version constant
-define("PMPRO_VERSION", "1.7.8.2");
+define("PMPRO_VERSION", "1.7.9.1");
 
 //if the session has been started yet, start it (ignore if running from command line)
 if(defined('STDIN') )
@@ -98,17 +98,53 @@ $membership_levels = $wpdb->get_results( "SELECT * FROM {$wpdb->pmpro_membership
 */
 function pmpro_activation()
 {
+	//schedule crons
 	wp_schedule_event(time(), 'daily', 'pmpro_cron_expiration_warnings');
 	//wp_schedule_event(time(), 'daily', 'pmpro_cron_trial_ending_warnings');		//this warning has been deprecated since 1.7.2
 	wp_schedule_event(time(), 'daily', 'pmpro_cron_expire_memberships');
 	wp_schedule_event(time(), 'monthly', 'pmpro_cron_credit_card_expiring_warnings');
+
+	//add caps to admin role
+	$role = get_role( 'administrator' );
+	$role->add_cap( 'pmpro_memberships_menu' );
+	$role->add_cap( 'pmpro_membershiplevels' );	
+	$role->add_cap( 'pmpro_edit_memberships' );
+	$role->add_cap( 'pmpro_pagesettings' );	
+	$role->add_cap( 'pmpro_paymentsettings' );
+	$role->add_cap( 'pmpro_emailsettings' );
+	$role->add_cap( 'pmpro_advancedsettings' );	
+	$role->add_cap( 'pmpro_addons' );	
+	$role->add_cap( 'pmpro_memberslist' );
+	$role->add_cap( 'pmpro_membersliscsv' );
+	$role->add_cap( 'pmpro_reports' );
+	$role->add_cap( 'pmpro_orders' );
+	$role->add_cap( 'pmpro_orderscsv' );
+	$role->add_cap( 'pmpro_discountcodes' );	
 }
 function pmpro_deactivation()
 {
+	//remove crons
 	wp_clear_scheduled_hook('pmpro_cron_expiration_warnings');
 	wp_clear_scheduled_hook('pmpro_cron_trial_ending_warnings');
 	wp_clear_scheduled_hook('pmpro_cron_expire_memberships');
-	wp_clear_scheduled_hook('pmpro_cron_credit_card_expiring_warnings');
+	wp_clear_scheduled_hook('pmpro_cron_credit_card_expiring_warnings');   
+
+	//remove caps from admin role
+	$role = get_role( 'administrator' );
+	$role->remove_cap( 'pmpro_memberships_menu' );
+	$role->remove_cap( 'pmpro_membershiplevels' );	
+	$role->remove_cap( 'pmpro_edit_memberships' );
+	$role->remove_cap( 'pmpro_pagesettings' );	
+	$role->remove_cap( 'pmpro_paymentsettings' );
+	$role->remove_cap( 'pmpro_emailsettings' );
+	$role->remove_cap( 'pmpro_advancedsettings' );
+	$role->remove_cap( 'pmpro_addons' );
+	$role->remove_cap( 'pmpro_memberslist' );
+	$role->remove_cap( 'pmpro_membersliscsv' );
+	$role->remove_cap( 'pmpro_reports' );
+	$role->remove_cap( 'pmpro_orders' );
+	$role->remove_cap( 'pmpro_orderscsv' );
+	$role->remove_cap( 'pmpro_discountcodes' );
 }
 register_activation_hook(__FILE__, 'pmpro_activation');
 register_deactivation_hook(__FILE__, 'pmpro_deactivation');
