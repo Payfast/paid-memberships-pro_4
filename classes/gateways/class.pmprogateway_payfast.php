@@ -97,6 +97,7 @@
                 'item_name'     => substr($order->membership_level->name . " at " . get_bloginfo("name"), 0, 127)
                 );
 
+            $pfOutput = "";
             foreach( $data  as $key => $val )
             {
                 $pfOutput .= $key .'='. urlencode( trim( $val ) ) .'&';
@@ -108,10 +109,7 @@
 
             $signature = md5( $pfOutput );
 
-            foreach( $data  as $key => $val )
-            {
-                $payfast_url .= '?'.$pfOutput.'&signature='.$signature;
-            }              
+            $payfast_url .= '?'.$pfOutput.'&signature='.$signature;
             
             
             wp_redirect($payfast_url);
