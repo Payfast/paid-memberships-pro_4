@@ -174,7 +174,7 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
                         return false;
                     }
                     else
-                        return true;	//not using Stripe anymore
+                        return true;    //not using Stripe anymore
                 });
             });
 
@@ -220,7 +220,7 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
     }
 
     add_filter("pmpro_required_billing_fields", "pmpro_stripe_dont_require_CVV");
-}
+
 
 //code for Braintree
 if ($gateway == "braintree") {
@@ -233,6 +233,21 @@ if ($gateway == "braintree") {
     }
 
     add_filter("pmpro_required_billing_fields", "pmpro_braintree_dont_require_CVV");
+}
+
+if ($gateway == "payfast") {
+    //don't require the CVV, but look for cvv (lowercase) that braintree sends
+    function pmpro_payfast_dont_require($fields)
+    {
+        $remove = array('CVV', 'ExpirationYear', 'ExpirationMonth', 'AccountNumber', 'CardType');
+        foreach( $remove as $k=>$v )
+        {
+            unset($v);
+        }
+        return $fields;
+    }
+
+    add_filter("pmpro_required_billing_fields", "pmpro_payfast_dont_require");
 }
 
 //get all levels in case we need them
@@ -435,7 +450,7 @@ if ($submit && $pmpro_msgt != "pmpro_error") {
         $password2 = $password;
     }
 
-    if ($pmpro_requirebilling && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "twocheckout") {
+    if ($pmpro_requirebilling && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "twocheckout" && $gateway != "payfast") {
         //if using stripe lite, remove some fields from the required array
         $pmpro_stripe_lite = apply_filters("pmpro_stripe_lite", false);
         if ($pmpro_stripe_lite && $gateway == "stripe") {
@@ -472,6 +487,7 @@ if ($submit && $pmpro_msgt != "pmpro_error") {
     }
 
     if (!empty($pmpro_error_fields)) {
+        //print_r($pmpro_error_fields);exit();
         pmpro_setMessage(__("Please complete all required fields.", "pmpro"), "pmpro_error");
     }
     if (!empty($password) && $password != $password2) {
@@ -836,7 +852,7 @@ if (!empty($pmpro_confirmed)) {
 
             $morder->Gateway->sendToPayPal($morder);
         }
-		if($gateway == "payfast" && !empty( $morder ) )
+        if($gateway == "payfast" && !empty( $morder ) )
             {
                 $morder->user_id = $user_id;                
                 $morder->saveOrder();
