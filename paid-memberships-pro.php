@@ -3,7 +3,7 @@
 Plugin Name: Paid Memberships Pro
 Plugin URI: http://www.paidmembershipspro.com
 Description: Plugin to Handle Memberships
-Version: 1.7.11
+Version: 1.7.12
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 */
@@ -13,7 +13,7 @@ Author URI: http://www.strangerstudios.com
 */
 
 //version constant
-define("PMPRO_VERSION", "1.7.11");
+define("PMPRO_VERSION", "1.7.12");
 
 //if the session has been started yet, start it (ignore if running from command line)
 if(defined('STDIN') )
@@ -106,10 +106,10 @@ $membership_levels = $wpdb->get_results( "SELECT * FROM {$wpdb->pmpro_membership
 function pmpro_activation()
 {
 	//schedule crons
-	wp_schedule_event(time(), 'daily', 'pmpro_cron_expiration_warnings');
-	//wp_schedule_event(time(), 'daily', 'pmpro_cron_trial_ending_warnings');		//this warning has been deprecated since 1.7.2
-	wp_schedule_event(time(), 'daily', 'pmpro_cron_expire_memberships');
-	wp_schedule_event(time(), 'monthly', 'pmpro_cron_credit_card_expiring_warnings');
+	wp_schedule_event(current_time('timestamp'), 'daily', 'pmpro_cron_expiration_warnings');
+	//wp_schedule_event(current_time('timestamp')(), 'daily', 'pmpro_cron_trial_ending_warnings');		//this warning has been deprecated since 1.7.2
+	wp_schedule_event(current_time('timestamp'), 'daily', 'pmpro_cron_expire_memberships');
+	wp_schedule_event(current_time('timestamp'), 'monthly', 'pmpro_cron_credit_card_expiring_warnings');
 
 	//add caps to admin role
 	$role = get_role( 'administrator' );

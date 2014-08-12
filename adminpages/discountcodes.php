@@ -36,8 +36,8 @@
 		$uses = $_POST['uses'];
 		
 		//fix up dates		
-		$starts = date("Y-m-d", strtotime($starts_month . "/" . $starts_day . "/" . $starts_year));
-		$expires = date("Y-m-d", strtotime($expires_month . "/" . $expires_day . "/" . $expires_year));
+		$starts = date("Y-m-d", strtotime($starts_month . "/" . $starts_day . "/" . $starts_year, current_time("timestamp")));
+		$expires = date("Y-m-d", strtotime($expires_month . "/" . $expires_day . "/" . $expires_year, current_time("timestamp")));
 		
 		//updating or new?
 		if($saveid > 0)
@@ -356,7 +356,7 @@
 									for($i = 1; $i < 13; $i++)
 									{
 									?>
-									<option value="<?php echo $i?>" <?php if($i == $selected_starts_month) { ?>selected="selected"<?php } ?>><?php echo date("M", strtotime($i . "/1/" . $current_year))?></option>
+									<option value="<?php echo $i?>" <?php if($i == $selected_starts_month) { ?>selected="selected"<?php } ?>><?php echo date("M", strtotime($i . "/1/" . $current_year, current_time("timestamp")))?></option>
 									<?php
 									}
 								?>
@@ -374,7 +374,7 @@
 									for($i = 1; $i < 13; $i++)
 									{
 									?>
-									<option value="<?php echo $i?>" <?php if($i == $selected_expires_month) { ?>selected="selected"<?php } ?>><?php echo date("M", strtotime($i . "/1/" . $current_year))?></option>
+									<option value="<?php echo $i?>" <?php if($i == $selected_expires_month) { ?>selected="selected"<?php } ?>><?php echo date("M", strtotime($i . "/1/" . $current_year, current_time("timestamp")))?></option>
 									<?php
 									}
 								?>
@@ -385,7 +385,7 @@
                     </tr>
 					
 					<tr>
-                        <th scope="row" valign="top"><label for="uses"><?php _ex('Uses', 'Number of uses for a discount code', 'pmpro');?>:</label></th>
+                        <th scope="row" valign="top"><label for="uses"><?php _e('Uses', 'pmpro');?>:</label></th>
                         <td>
 							<input name="uses" type="text" size="10" value="<?php if(!empty($code->uses)) echo str_replace("\"", "&quot;", stripslashes($code->uses));?>" />
 							<small class="pmpro_lite"><?php _e('Leave blank for unlimited uses.', 'pmpro');?></small>
@@ -397,7 +397,7 @@
 			
 			<?php do_action("pmpro_discount_code_after_settings"); ?>
 			
-			<h3>Which Levels Will This Code Apply To?</h3>
+			<h3><?php _e('Which Levels Will This Code Apply To?', 'pmpro'); ?></h3>
 			
 			<div class="pmpro_discount_levels">
 			<?php

@@ -58,6 +58,8 @@
 		
 		function charge(&$order)
 		{
+			global $pmpro_currency;
+			
 			//create a code for the order
 			if(empty($order->code))
 				$order->code = $order->getRandomCode();
@@ -83,7 +85,7 @@
 			{ 
 				$response = Stripe_Charge::create(array(
 				  "amount" => $amount * 100, # amount in cents, again
-				  "currency" => strtolower(pmpro_getOption("currency")),
+				  "currency" => $pmpro_currency,
 				  "customer" => $this->customer->id,
 				  "description" => "Order #" . $order->code . ", " . trim($order->FirstName . " " . $order->LastName) . " (" . $order->Email . ")"
 				  )
@@ -176,7 +178,7 @@
 					}
 					
 					return $this->customer;
-				} 
+				}
 				catch (Exception $e) 
 				{
 					//assume no customer found					
@@ -218,8 +220,8 @@
 					}
 					add_action("user_register", "pmpro_user_register_stripe_customerid");
 				}
-				
-				return $this->customer;
+
+                return apply_filters('pmpro_stripe_create_customer', $this->customer);
 			}
 			
 			return false;			
@@ -227,6 +229,8 @@
 		
 		function subscribe(&$order)
 		{
+			global $pmpro_currency;
+			
 			//create a code for the order
 			if(empty($order->code))
 				$order->code = $order->getRandomCode();
@@ -262,13 +266,13 @@
 				$trial_period_days = $order->BillingFrequency * 30;	//assume monthly
 				
 			//convert to a profile start date
-			$order->ProfileStartDate = date("Y-m-d", strtotime("+ " . $trial_period_days . " Day")) . "T0:0:0";			
+			$order->ProfileStartDate = date("Y-m-d", strtotime("+ " . $trial_period_days . " Day", current_time("timestamp"))) . "T0:0:0";
 			
 			//filter the start date
 			$order->ProfileStartDate = apply_filters("pmpro_profile_start_date", $order->ProfileStartDate, $order);			
 
 			//convert back to days
-			$trial_period_days = ceil(abs(strtotime(date("Y-m-d")) - strtotime($order->ProfileStartDate)) / 86400);
+			$trial_period_days = ceil(abs(strtotime(date("Y-m-d"), current_time("timestamp")) - strtotime($order->ProfileStartDate, current_time("timestamp"))) / 86400);
 
 			//now add the actual trial set by the site
 			if(!empty($order->TrialBillingCycles))						
@@ -286,16 +290,18 @@
 			
 			//create a plan
 			try
-			{						
-				$plan = Stripe_Plan::create(array(
-				  "amount" => $amount * 100,
-				  "interval_count" => $order->BillingFrequency,
-				  "interval" => strtolower($order->BillingPeriod),
-				  "trial_period_days" => $trial_period_days,
-				  "name" => $order->membership_name . " for order " . $order->code,
-				  "currency" => strtolower(pmpro_getOption("currency")),
-				  "id" => $order->code)
-				);
+			{
+                $plan = array(
+                    "amount" => $amount * 100,
+                    "interval_count" => $order->BillingFrequency,
+                    "interval" => strtolower($order->BillingPeriod),
+                    "trial_period_days" => $trial_period_days,
+                    "name" => $order->membership_name . " for order " . $order->code,
+                    "currency" => strtolower($pmpro_currency),
+                    "id" => $order->code
+                );
+
+				$plan = Stripe_Plan::create(apply_filters('pmpro_stripe_create_plan_array', $plan));
 			}
 			catch (Exception $e)
 			{
