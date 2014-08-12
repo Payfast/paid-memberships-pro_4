@@ -2,7 +2,8 @@
 
 global $post, $gateway, $wpdb, $besecure, $discount_code, $pmpro_level, $pmpro_levels, $pmpro_msg, $pmpro_msgt, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $pmpro_show_discount_code, $pmpro_error_fields, $pmpro_required_billing_fields, $pmpro_required_user_fields, $wp_version, $current_user;
 
-$current_user->membership_level = pmpro_getMembershipLevelForUser($current_user->ID);
+if($current_user->ID)
+    $current_user->membership_level = pmpro_getMembershipLevelForUser($current_user->ID);
 
 //this var stores fields with errors so we can make them red on the frontend
 $pmpro_error_fields = array();
@@ -133,6 +134,22 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
                             exp_month: jQuery('#ExpirationMonth').val(),
                             exp_year: jQuery('#ExpirationYear').val()
                             <?php
+                                $pmpro_stripe_verify_address = apply_filters("pmpro_stripe_verify_address", pmpro_getOption('stripe_billingaddress'));
+                                if(!empty($pmpro_stripe_verify_address))
+                                {
+                                ?>, address_line1: jQuery('#baddress1').val(),
+                            address_line2: jQuery('#baddress2').val(),
+                            address_city: jQuery('#bcity').val(),
+                            address_state: jQuery('#bstate').val(),
+                            address_zip: jQuery('#bzipcode').val(),
+                            address_country: jQuery('#bcountry').val()
+                            <?php
+                                }
+                            ?>
+                        };
+
+                        if (jQuery('#bfirstname').length && jQuery('#blastname').length)
+                            args['name'] = jQuery.trim(jQuery('#bfirstname').val() + ' ' + jQuery('#blastname').val());
                                 $pmpro_stripe_verify_address = apply_filters("pmpro_stripe_verify_address", true);
                                 if(!empty($pmpro_stripe_verify_address))
                                 {
@@ -166,268 +183,6 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
                     // re-enable the submit button
                     jQuery('.pmpro_btn-submit-checkout').removeAttr("disabled");
 
-					//hide processing message
-					jQuery('#pmpro_processing_message').css('visibility', 'hidden');
-					
-					// show the errors on the form
-					alert(response.error.message);
-					jQuery(".payment-errors").text(response.error.message);
-				} else {
-					var form$ = jQuery("#pmpro_form, .pmpro_form");					
-					// token contains id, last4, and card type
-					var token = response['id'];					
-					// insert the token into the form so it gets submitted to the server
-					form$.append("<input type='hidden' name='stripeToken' value='" + token + "'/>");
-										
-					//insert fields for other card fields
-					form$.append("<input type='hidden' name='CardType' value='" + response['card']['type'] + "'/>");
-					form$.append("<input type='hidden' name='AccountNumber' value='XXXXXXXXXXXXX" + response['card']['last4'] + "'/>");
-					form$.append("<input type='hidden' name='ExpirationMonth' value='" + ("0" + response['card']['exp_month']).slice(-2) + "'/>");
-					form$.append("<input type='hidden' name='ExpirationYear' value='" + response['card']['exp_year'] + "'/>");							
-					
-					// and submit
-					form$.get(0).submit();
-				}
-			}
-		</script>
-		<?php
-		}
-		add_action("wp_head", "pmpro_stripe_javascript");
-		
-		//don't require the CVV
-		function pmpro_stripe_dont_require_CVV($fields)
-		{
-			unset($fields['CVV']);			
-			return $fields;
-		}
-		add_filter("pmpro_required_billing_fields", "pmpro_stripe_dont_require_CVV");
-	}
-	
-	//code for Braintree
-	if($gateway == "braintree")
-	{
-		//don't require the CVV, but look for cvv (lowercase) that braintree sends
-		function pmpro_braintree_dont_require_CVV($fields)
-		{
-			unset($fields['CVV']);	
-			$fields['cvv'] = true;
-			return $fields;
-		}
-		add_filter("pmpro_required_billing_fields", "pmpro_braintree_dont_require_CVV");
-	}
-		
-	//get all levels in case we need them
-	global $pmpro_levels;
-	$pmpro_levels = pmpro_getAllLevels();	
-	
-	//should we show the discount code field?
-	if($wpdb->get_var("SELECT id FROM $wpdb->pmpro_discount_codes LIMIT 1"))
-		$pmpro_show_discount_code = true;
-	else
-		$pmpro_show_discount_code = false;
-	$pmpro_show_discount_code = apply_filters("pmpro_show_discount_code", $pmpro_show_discount_code);
-		
-	//by default we show the account fields if the user isn't logged in
-	if($current_user->ID)
-	{
-		$skip_account_fields = true;
-	}
-	else
-	{
-		$skip_account_fields = false;
-	}	
-	//in case people want to have an account created automatically
-	$skip_account_fields = apply_filters("pmpro_skip_account_fields", $skip_account_fields, $current_user);
-	
-	//some options
-	global $tospage;
-	$tospage = pmpro_getOption("tospage");
-	if($tospage)
-		$tospage = get_post($tospage);
-	
-	//load em up (other fields)
-	global $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
-	
-	if(isset($_REQUEST['order_id']))
-		$order_id = $_REQUEST['order_id'];
-	else
-		$order_id = "";
-	if(isset($_REQUEST['bfirstname']))
-		$bfirstname = trim(stripslashes($_REQUEST['bfirstname']));	
-	else
-		$bfirstname = "";
-	if(isset($_REQUEST['blastname']))
-		$blastname = trim(stripslashes($_REQUEST['blastname']));	
-	else
-		$blastname = "";
-	if(isset($_REQUEST['fullname']))
-		$fullname = $_REQUEST['fullname'];		//honeypot for spammers
-	if(isset($_REQUEST['baddress1']))
-		$baddress1 = trim(stripslashes($_REQUEST['baddress1']));		
-	else
-		$baddress1 = "";
-	if(isset($_REQUEST['baddress2']))
-		$baddress2 = trim(stripslashes($_REQUEST['baddress2']));
-	else
-		$baddress2 = "";
-	if(isset($_REQUEST['bcity']))
-		$bcity = trim(stripslashes($_REQUEST['bcity']));
-	else
-		$bcity = "";
-	
-	if(isset($_REQUEST['bstate']))
-		$bstate = trim(stripslashes($_REQUEST['bstate']));
-	else
-		$bstate = "";
-	
-	//convert long state names to abbreviations
-	if(!empty($bstate))
-	{
-		global $pmpro_states;
-		foreach($pmpro_states as $abbr => $state)
-		{
-			if($bstate == $state)
-			{
-				$bstate = $abbr;
-				break;
-			}
-		}
-	}
-	
-	if(isset($_REQUEST['bzipcode']))
-		$bzipcode = trim(stripslashes($_REQUEST['bzipcode']));
-	else
-		$bzipcode = "";
-	if(isset($_REQUEST['bcountry']))
-		$bcountry = trim(stripslashes($_REQUEST['bcountry']));
-	else
-		$bcountry = "";
-	if(isset($_REQUEST['bphone']))
-		$bphone = trim(stripslashes($_REQUEST['bphone']));
-	else
-		$bphone = "";
-	if(isset($_REQUEST['bemail']))
-		$bemail = trim(stripslashes($_REQUEST['bemail']));
-	else
-		$bemail = "";
-	if(isset($_REQUEST['bconfirmemail_copy']))
-		$bconfirmemail = $bemail;	
-	elseif(isset($_REQUEST['bconfirmemail']))
-		$bconfirmemail = trim(stripslashes($_REQUEST['bconfirmemail']));
-	else
-		$bconfirmemail = "";
-		
-	if(isset($_REQUEST['CardType']) && !empty($_REQUEST['AccountNumber']))
-		$CardType = $_REQUEST['CardType'];
-	else
-		$CardType = "";
-	if(isset($_REQUEST['AccountNumber']))
-		$AccountNumber = trim($_REQUEST['AccountNumber']);
-	else
-		$AccountNumber = "";		
-	
-	if(isset($_REQUEST['ExpirationMonth']))
-		$ExpirationMonth = $_REQUEST['ExpirationMonth'];
-	else
-		$ExpirationMonth = "";
-	if(isset($_REQUEST['ExpirationYear']))
-		$ExpirationYear = $_REQUEST['ExpirationYear'];
-	else
-		$ExpirationYear = "";
-	if(isset($_REQUEST['CVV']))
-		$CVV = trim($_REQUEST['CVV']);
-	else
-		$CVV = "";
-	
-	if(isset($_REQUEST['discount_code']))
-		$discount_code = trim($_REQUEST['discount_code']);
-	else
-		$discount_code = "";
-	if(isset($_REQUEST['username']))
-		$username = trim($_REQUEST['username']);
-	else
-		$username = "";
-	if(isset($_REQUEST['password']))
-		$password = $_REQUEST['password'];
-	else
-		$password = "";
-	if(isset($_REQUEST['password2_copy']))
-		$password2 = $password;	
-	elseif(isset($_REQUEST['password2']))
-		$password2 = $_REQUEST['password2'];
-	else
-		$password2 = "";
-	if(isset($_REQUEST['tos']))
-		$tos = $_REQUEST['tos'];		
-	else
-		$tos = "";
-	
-	//for stripe, load up token values
-	if(isset($_REQUEST['stripeToken']))
-	{
-		$stripeToken = $_REQUEST['stripeToken'];				
-	}
-	
-	//for Braintree, load up values
-	if(isset($_REQUEST['number']) && isset($_REQUEST['expiration_date']) && isset($_REQUEST['cvv']))
-	{
-		$braintree_number = $_REQUEST['number'];
-		$braintree_expiration_date = $_REQUEST['expiration_date'];
-		$braintree_cvv = $_REQUEST['cvv'];
-	}
-	
-	//_x stuff in case they clicked on the image button with their mouse
-	if(isset($_REQUEST['submit-checkout']))
-		$submit = $_REQUEST['submit-checkout'];
-	if(empty($submit) && isset($_REQUEST['submit-checkout_x']) )
-		$submit = $_REQUEST['submit-checkout_x'];	
-	if(isset($submit) && $submit === "0") 
-		$submit = true;	
-	elseif(!isset($submit))
-		$submit = false;
-	
-	//require fields
-	$pmpro_required_billing_fields = array(
-		"bfirstname" => $bfirstname,
-		"blastname" => $blastname,
-		"baddress1" => $baddress1,
-		"bcity" => $bcity,
-		"bstate" => $bstate,
-		"bzipcode" => $bzipcode,
-		"bphone" => $bphone,
-		"bemail" => $bemail,
-		"bcountry" => $bcountry,
-		"CardType" => $CardType,
-		"AccountNumber" => $AccountNumber,
-		"ExpirationMonth" => $ExpirationMonth,
-		"ExpirationYear" => $ExpirationYear,
-		"CVV" => $CVV
-	);
-	$pmpro_required_billing_fields = apply_filters("pmpro_required_billing_fields", $pmpro_required_billing_fields);		
-	$pmpro_required_user_fields = array(
-		"username" => $username,
-		"password" => $password,
-		"password2" => $password2,
-		"bemail" => $bemail,
-		"bconfirmemail" => $bconfirmemail
-	);
-	$pmpro_required_user_fields = apply_filters("pmpro_required_user_fields", $pmpro_required_user_fields);
-	
-	//check their fields if they clicked continue
-	if($submit && $pmpro_msgt != "pmpro_error")
-	{		
-		//if we're skipping the account fields and there is no user, we need to create a username and password
-		if($skip_account_fields && !$current_user->ID)
-		{
-			$username = pmpro_generateUsername($bfirstname, $blastname, $bemail);
-			if(empty($username))
-				$username = pmpro_getDiscountCode();
-			$password = pmpro_getDiscountCode() . pmpro_getDiscountCode();	//using two random discount codes
-			$password2 = $password;
-		}	
-				
-		if($pmpro_requirebilling && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "twocheckout")
-		{
                     //hide processing message
                     jQuery('#pmpro_processing_message').css('visibility', 'hidden');
 
@@ -1090,11 +845,10 @@ if (!empty($pmpro_confirmed)) {
                 if(!empty($discount_code_id))
                     $wpdb->query("INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $discount_code_id . "', '" . $user_id . "', '" . $morder->id . "', now())"); 
                 
-                //do_action("pmpro_before_send_to_payfast", $user_id, $morder);
+                do_action("pmpro_before_send_to_payfast", $user_id, $morder);
                 
                 $morder->Gateway->sendToPayFast($morder);
             }
-
         //save user id and send Twocheckout customers to Twocheckout now
         if ($gateway == "twocheckout" && !empty($morder)) {
             $morder->user_id = $user_id;
@@ -1153,7 +907,7 @@ if (!empty($pmpro_confirmed)) {
             if (!empty($morder)) {
                 $morder->user_id = $user_id;
                 $morder->membership_id = $pmpro_level->id;
-				$morder->saveOrder();            
+                $morder->saveOrder();
             }
 
             //update the current user

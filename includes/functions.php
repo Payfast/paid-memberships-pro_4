@@ -830,6 +830,7 @@ function pmpro_getMetavalues($query)
 	global $wpdb;
 	
 	$results = $wpdb->get_results($query);
+	$r = new stdClass();
 	foreach($results as $result)
 	{
 		$r->{$result->key} = $result->value;
@@ -1115,8 +1116,8 @@ function pmpro_checkDiscountCode($code, $level_id = NULL, $return_errors = false
 	}
 
 	//fix the date timestamps
-	$dbcode->starts = strtotime(date("m/d/Y", $dbcode->starts, current_time("timestamp")));
-	$dbcode->expires = strtotime(date("m/d/Y", $dbcode->expires, current_time("timestamp")));
+	$dbcode->starts = strtotime(date("m/d/Y", $dbcode->starts));
+	$dbcode->expires = strtotime(date("m/d/Y", $dbcode->expires));
 
 	//today
 	$today = strtotime(date("m/d/Y 00:00:00", current_time("timestamp")));

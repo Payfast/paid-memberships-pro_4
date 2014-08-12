@@ -3,7 +3,7 @@ Contributors: strangerstudios
 Tags: memberships, membership, authorize.net, ecommerce, paypal, stripe, braintree, restrict access, restrict content, directory site, payflow
 Requires at least: 3.5
 Tested up to: 3.9.1
-Stable tag: 1.7.12
+Stable tag: 1.7.13
 
 The easiest way to GET PAID with your WordPress site. Flexible content control by Membership Level, Reports, Affiliates and Discounts
 
@@ -102,6 +102,16 @@ Not sure? You can find out by doing a bit a research.
 4. Offer Membership Discounts with specific price rules (restricted by level, unique pricing for each level, # of uses, expiration date.)
 
 == Changelog == 
+= 1.7.13 =
+* Added Danish (da_DK) translation. (Thanks, Mikael)
+* Fixed bugs with timestamps in various places (especially around trial dates) introduced in 1.7.12
+* Another fix to keep PMPro from sending "undefined undefined" as the name to Stripe when the 'don't show billing fields' option is chosen.
+* $pmpro_stripe_verify_address flag defaults to same value of Stripe's showbillingaddress option now.
+* Changed the priority of pmpro_applydiscountcode_init hooking on init to 11 so pmpro_init() will run before and setup pmpro_currency_symbol among other things. (Thanks, semyou on GitHub.)
+* Explicitly setting $current_user->membership_level in a few places to avoid issues where current_user is overwritten between init and when we try to use it.
+* Avoiding a warning in pmpro_getMetavalues() function. (Thanks, Scott Sousa)
+* Added target="_blank" to help links on admin pages. (Thanks, AntonVrba on GitHub)
+
 = 1.7.12 =
 * Now including expiration text in text that is updated when a discount code is used. (Thanks, John Zeiger)
 * Making sure that $myuser->membership_level is set in pmpro_has_membership_access().
