@@ -2,8 +2,8 @@
 Contributors: strangerstudios
 Tags: memberships, membership, authorize.net, ecommerce, paypal, stripe, braintree, restrict access, restrict content, directory site, payflow
 Requires at least: 3.5
-Tested up to: 3.9.1
-Stable tag: 1.7.13.1
+Tested up to: 4.0
+Stable tag: 1.7.14
 
 The easiest way to GET PAID with your WordPress site. Flexible content control by Membership Level, Reports, Affiliates and Discounts
 
@@ -102,6 +102,15 @@ Not sure? You can find out by doing a bit a research.
 4. Offer Membership Discounts with specific price rules (restricted by level, unique pricing for each level, # of uses, expiration date.)
 
 == Changelog == 
+= 1.7.14 =
+* BUG: Fixed bug where level cost would sometimes have incorrect pluralization of months/weeks/etc. (Thanks, Kevin Ackerman)
+* BUG/ENHANCEMENT: Now checking the child and parent theme for email_header.html and email_footer.html files to use for emails. The child theme is checked first.
+* ENHANCEMENT: Added pmpro_getfile_before_readfile hook (passes $filename and $mimetype params) in getfile.php
+* BUG/ENHANCEMENT: getMembershipLevel method of MemberOrder can now handle when discount_code property is an object. Also, the IPN Handler and 2Checkout handler will now try to get the discount code for the order to correctly update the users pmpro_memberships_users entry.
+* BUG: Removed extra class attribute from CVV field that interfered with the required * JS code and some other CSS/JS-related things. (Thanks, catapult)
+* ENHANCEMENT: Added code to redirect to the redirect_url if you pass a redirect_url to the login page and the user is already logged in. Updated the links in email confirmations to use login links with redirects instead of direct links.
+* EHANCEMENT: Added pmpro_email_attachments filter, which can be used to add attachments to PMPro emails that are sent out. E.g., https://gist.github.com/strangerstudios/c4e771dca8723613bce3
+
 = 1.7.13.1 =
 * Fixed bug introduced in 1.7.12 where discount code uses were not being tracked.
 * Added pmpro_check_discount_code filter so you can do your own checks on discount codes.
