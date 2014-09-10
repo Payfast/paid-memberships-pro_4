@@ -150,22 +150,6 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
 
                         if (jQuery('#bfirstname').length && jQuery('#blastname').length)
                             args['name'] = jQuery.trim(jQuery('#bfirstname').val() + ' ' + jQuery('#blastname').val());
-                                $pmpro_stripe_verify_address = apply_filters("pmpro_stripe_verify_address", true);
-                                if(!empty($pmpro_stripe_verify_address))
-                                {
-                                ?>, address_line1: jQuery('#baddress1').val(),
-                            address_line2: jQuery('#baddress2').val(),
-                            address_city: jQuery('#bcity').val(),
-                            address_state: jQuery('#bstate').val(),
-                            address_zip: jQuery('#bzipcode').val(),
-                            address_country: jQuery('#bcountry').val()
-                            <?php
-                                }
-                            ?>
-                        };
-
-                        if (jQuery('#bfirstname') && jQuery('#blastname'))
-                            args['name'] = jQuery.trim(jQuery('#bfirstname').val() + ' ' + jQuery('#blastname').val());
 
                         //create token
                         Stripe.createToken(args, stripeResponseHandler);
@@ -443,7 +427,7 @@ $pmpro_required_user_fields = apply_filters("pmpro_required_user_fields", $pmpro
 if ($submit && $pmpro_msgt != "pmpro_error") {
 
     //make sure javascript is ok
-    if(apply_filters("pmpro_require_javascript_for_checkout", true) && empty($_REQUEST['javascriptok'])) {
+    if(apply_filters("pmpro_require_javascript_for_checkout", true) && !empty($_REQUEST['checkjavascript']) && empty($_REQUEST['javascriptok'])) {
         pmpro_setMessage(__("There are JavaScript errors on the page. Please contact the webmaster.", "pmpro"), "pmpro_error");
     }
 
@@ -493,8 +477,8 @@ if ($submit && $pmpro_msgt != "pmpro_error") {
     }
 
     if (!empty($pmpro_error_fields)) {
-        //print_r($pmpro_error_fields);exit();
-        pmpro_setMessage(__("Please complete all required fields.", "pmpro"), "pmpro_error");
+        d($pmpro_error_fields);
+		pmpro_setMessage(__("Please complete all required fields.", "pmpro"), "pmpro_error");
     }
     if (!empty($password) && $password != $password2) {
         pmpro_setMessage(__("Your passwords do not match. Please try again.", "pmpro"), "pmpro_error");

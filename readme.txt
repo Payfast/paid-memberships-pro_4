@@ -3,7 +3,7 @@ Contributors: strangerstudios
 Tags: memberships, membership, authorize.net, ecommerce, paypal, stripe, braintree, restrict access, restrict content, directory site, payflow
 Requires at least: 3.5
 Tested up to: 4.0
-Stable tag: 1.7.14
+Stable tag: 1.7.14.1
 
 The easiest way to GET PAID with your WordPress site. Flexible content control by Membership Level, Reports, Affiliates and Discounts
 
@@ -102,6 +102,14 @@ Not sure? You can find out by doing a bit a research.
 4. Offer Membership Discounts with specific price rules (restricted by level, unique pricing for each level, # of uses, expiration date.)
 
 == Changelog == 
+= 1.7.14.1 =
+* BUG: Fixed warnings in PayPal Express class that could break redirects at checkout. (Thanks, Adam Warner)
+* BUG: Fixed issue where new users who checked out with Braintree weren't having their customerid's saved, which led to subscription syncronization issues if they checked out again or updated their billing.
+* BUG: Fixed warnings in the membership-billing page.
+* BUG: Fixed false positive "There are JavaScript errors on the page. Please contact the webmaster." errors.
+* BUG: Fixed issue where users on some sites running 1.7.14 could not logout.
+* OTHER: Changed the CSS class of the checkout button generated via [checkout_button] shortcode or pmpro_getCheckoutButton() function from "btn btn-primary" to "pmpro_btn" to match other buttons generated with PMPro.
+
 = 1.7.14 =
 * BUG: Fixed bug where level cost would sometimes have incorrect pluralization of months/weeks/etc. (Thanks, Kevin Ackerman)
 * BUG/ENHANCEMENT: Now checking the child and parent theme for email_header.html and email_footer.html files to use for emails. The child theme is checked first.
