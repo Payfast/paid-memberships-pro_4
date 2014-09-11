@@ -193,7 +193,7 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
         </script>
     <?php
     }
-
+}
     add_action("wp_head", "pmpro_stripe_javascript");
 
     //don't require the CVV
