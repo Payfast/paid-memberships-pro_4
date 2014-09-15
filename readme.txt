@@ -1,5 +1,6 @@
 ==== PayFast Paid Memberships Pro ====
-This plugin is a fork off the Paid Memberships Pro wordpress plugin that allows for payment processing through PayFast, for support, bug reports and queries, please contact support@payfast.co.za
+This plugin is a fork off the Paid Memberships Pro wordpress plugin that allows for payment processing through PayFast, 
+for support, bug reports and queries, please contact support@payfast.co.za
 
 === Paid Memberships Pro ===
 Contributors: strangerstudios
