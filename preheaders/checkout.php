@@ -194,7 +194,7 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
     <?php
     }
     add_action("wp_head", "pmpro_stripe_javascript");
-}
+
     
 
     //don't require the CVV
@@ -205,7 +205,7 @@ if ($gateway == "stripe" && !pmpro_isLevelFree($pmpro_level)) {
     }
 
     add_filter("pmpro_required_billing_fields", "pmpro_stripe_dont_require_CVV");
-
+}
 
 //code for Braintree
 if ($gateway == "braintree") {
