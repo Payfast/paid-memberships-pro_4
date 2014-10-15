@@ -93,7 +93,7 @@
                 'name_last'     => $order->LastName,
                 'email_address' => $order->Email,
                 'm_payment_id'  => $order->code,
-                'amount'        => number_format($initial_payment, 2),
+                'amount'        => number_format($initial_payment, 2, '.', ''),
                 'item_name'     => substr($order->membership_level->name . " at " . get_bloginfo("name"), 0, 127)
                 );
 
