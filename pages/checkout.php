@@ -1,5 +1,5 @@
 <?php		
-	global $gateway, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $wpdb, $current_user, $pmpro_msg, $pmpro_msgt, $pmpro_requirebilling, $pmpro_level, $pmpro_levels, $tospage, $pmpro_currency_symbol, $pmpro_show_discount_code, $pmpro_error_fields;
+	global $gateway, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $wpdb, $current_user, $pmpro_msg, $pmpro_msgt, $pmpro_requirebilling, $pmpro_level, $pmpro_levels, $tospage, $pmpro_show_discount_code, $pmpro_error_fields;
 	global $discount_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth,$ExpirationYear;	
 	
 	$pmpro_stripe_lite = apply_filters("pmpro_stripe_lite", !pmpro_getOption("stripe_billingaddress"));	//default is oposite of the stripe_billingaddress setting
@@ -125,7 +125,7 @@
 				jQuery('#other_discount_code_button').attr('disabled', 'disabled');				
 				
 				jQuery.ajax({
-					url: '<?php echo admin_url()?>',type:'GET',timeout:<?php echo apply_filters("pmpro_ajax_timeout", 5000, "applydiscountcode");?>,
+					url: '<?php echo admin_url('admin-ajax.php')?>',type:'GET',timeout:<?php echo apply_filters("pmpro_ajax_timeout", 5000, "applydiscountcode");?>,
 					dataType: 'html',
 					data: "action=applydiscountcode&code=" + code + "&level=" + level_id + "&msgfield=pmpro_message",
 					error: function(xml){
@@ -489,17 +489,31 @@
 						<div class="pmpro_sslseal"><?php echo stripslashes($sslseal)?></div>
 					<?php
 					}
-				?>
-				<?php if(empty($pmpro_stripe_lite) || $gateway != "stripe") { ?>
-				<div class="pmpro_payment-card-type">
-					<label for="CardType"><?php _e('Card Type', 'pmpro');?></label>
-					<select id="CardType" <?php if($gateway != "stripe") { ?>name="CardType"<?php } ?> class=" <?php echo pmpro_getClassForField("CardType");?>">
-						<?php foreach($pmpro_accepted_credit_cards as $cc) { ?>
-							<option value="<?php echo $cc?>" <?php if($CardType == $cc) { ?>selected="selected"<?php } ?>><?php echo $cc?></option>
-						<?php } ?>												
-					</select> 
-				</div>
-				<?php } ?>
+				?>				
+				<input type="hidden" id="CardType" name="CardType" value="<?php echo esc_attr($CardType);?>" />
+				<script>
+					jQuery(document).ready(function() {												
+							jQuery('#AccountNumber').validateCreditCard(function(result) {								
+								var cardtypenames = {
+									"amex":"American Express",
+									"diners_club_carte_blanche":"Diners Club Carte Blanche",
+									"diners_club_international":"Diners Club International",
+									"discover":"Discover",
+									"jcb":"JCB",
+									"laser":"Laser",
+									"maestro":"Maestro",
+									"mastercard":"Mastercard",
+									"visa":"Visa",
+									"visa_electron":"Visa Electron"
+								}
+								
+								if(result.card_type)
+									jQuery('#CardType').val(cardtypenames[result.card_type.name]);
+								else
+									jQuery('#CardType').val('Unknown Card Type');
+							});						
+					});
+				</script>
 			
 				<div class="pmpro_payment-account-number">
 					<label for="AccountNumber"><?php _e('Card Number', 'pmpro');?></label>
@@ -574,7 +588,7 @@
 				jQuery('#discount_code_button').attr('disabled', 'disabled');
 				
 				jQuery.ajax({
-					url: '<?php echo admin_url()?>',type:'GET',timeout:<?php echo apply_filters("pmpro_ajax_timeout", 5000, "applydiscountcode");?>,
+					url: '<?php echo admin_url('admin-ajax.php')?>',type:'GET',timeout:<?php echo apply_filters("pmpro_ajax_timeout", 5000, "applydiscountcode");?>,
 					dataType: 'html',
 					data: "action=applydiscountcode&code=" + code + "&level=" + level_id + "&msgfield=discount_code_message",
 					error: function(xml){

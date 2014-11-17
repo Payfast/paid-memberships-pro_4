@@ -413,13 +413,32 @@
 		
 		if(!in_array(strtolower(pmpro_getOption('gateway_email')), $email))
 		{			
-			//not yours					
-			ipnlog("ERROR: receiver_email (" . $_POST['receiver_email'] . ") did not match (" . pmpro_getOption('gateway_email') . ")");			
-			//email them			
-			return false;
+			$r = false;
 		}		
 		else
+			$r = true;
+		
+		$r = apply_filters('pmpro_ipn_check_receiver_email', $r, $email);
+		
+		if($r)
 			return true;
+		else
+		{
+			if(!empty($_POST['receiver_email']))
+				$receiver_email = $_POST['receiver_email'];
+			else
+				$receiver_email = "N/A";
+				
+			if(!empty($_POST['business']))
+				$business = $_POST['business'];
+			else
+				$business = "N/A";
+			
+			//not yours					
+			ipnlog("ERROR: receiver_email (" . $receiver_email . ") and business email (" . $business . ") did not match (" . pmpro_getOption('gateway_email') . ")");			
+			return false;
+		}
+			
 	}	
 	
 	/*
@@ -498,13 +517,13 @@
 			if(!empty($_POST['first_name']))
 			{
 				$old_firstname = get_user_meta($morder->user_id, "first_name", true);
-				if(!empty($old_firstname))
+				if(empty($old_firstname))
 					update_user_meta($morder->user_id, "first_name", $_POST['first_name']);
 			}
 			if(!empty($_POST['last_name']))
 			{
 				$old_lastname = get_user_meta($morder->user_id, "last_name", true);
-				if(!empty($old_lastname))
+				if(empty($old_lastname))
 					update_user_meta($morder->user_id, "last_name", $_POST['last_name']);
 			}
 												

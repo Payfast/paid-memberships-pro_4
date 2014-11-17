@@ -7,7 +7,7 @@ Contributors: strangerstudios
 Tags: memberships, membership, authorize.net, ecommerce, paypal, stripe, braintree, restrict access, restrict content, directory site, payflow
 Requires at least: 3.5
 Tested up to: 4.0
-Stable tag: 1.7.14.2
+Stable tag: 1.7.15
 
 The easiest way to GET PAID with your WordPress site. Flexible content control by Membership Level, Reports, Affiliates and Discounts
 
@@ -106,6 +106,28 @@ Not sure? You can find out by doing a bit a research.
 4. Offer Membership Discounts with specific price rules (restricted by level, unique pricing for each level, # of uses, expiration date.)
 
 == Changelog == 
+= 1.7.15 =
+* SECURITY FIX: The /services/getfile.php script has been disabled by default. You must set the PMPRO_GETFILE_ENABLED constant to true or 1 to allow the script to run. Additionally, the script will strip ../ and /. type strings out of the URI when looking for files to get and will not read any files using the extensions set via the pmpro_getfile_extension_blacklist filter. By default inc, php, php3, php4, php5, phps, and phtml file types are not allowed. (Thanks, Kacper Szurek)
+* BUG: Fixed issue with Stripe integration where existing members checking out for new recurring subscriptions would receive extra charges. Now deleting the old Stripe subscription and any related open invoices and creating a new subscription instead of just updating the old subscription. (Thanks, Antonv and Thomas Sjolshagen)
+* BUG: Fixed issue with Braintree integration where the billing address associated with a credit card was not being updated via the update billing page. (Thanks, Keith Abramo)
+* BUG: Fixed issue where pmpro_next_payment() would return a 0 timestamp instead of false when there is no previous order. (Thanks, Thomas Sjolshagen)
+* ENHANCEMENT: Added pmpro_formatPrice() and pmpro_getCurrencyPosition() functions. Now using them to render prices with formatting. You can use the pmpro_format_price filter or pmpro_currecies filter to adjust the formatting of prices to support currency symbols after the price or to use commas instead of periods for separators.
+* ENAHNCEMENT: Added getSubscriptionStatus() to Authorize.net gateway class. Also fixed up some of the logic around checking the gateway environment.
+* BUG: Now urlencoding the API Username and Password sent through the PayPal APIs in case your values have + or other special characters in them. (Thanks, mrschmiddy)
+* BUG: Now showing cycle number in the Fee column of the members list. E.g. a level that is $10 every 3 months will now show up as $10.00 + $10.00/3 Months.
+* BUG: Fixed bug where user first_name and last_name were being overwritten by PayPal values when using PayPal Standard.
+* ENHANCEMENT: Added PMPRO_CRON_LIMIT constant, which can be used to limit the number of records processed by each scheduled cron job. This can for example, keep your server from going over PHP time limits or email limits. Use define('PMPRO_CRON_LIMIT', 100); to set the limit to 100.
+* BUG: Discount code AJAX calls now going through admin-ajax.php, fixing issues where the Themed Profiles module of Theme My Login would block those calls. (Thanks, Tony)
+* ENHANCEMENT: Removed the "CardType" field at checkout and now using the jquery.creditCardValidator script to determine the card type on form submit.
+* BUG: No longer setting $order->subtotal and invoice total to the billing amount (vs the initial price) for recurring payments with Cybersource, PayPal Standard, PayPal Express or Twocheckout. (Thanks, Joce Nunes)
+* ENHANCEMENT: The search filter will no longer filter out a post that is in a category blocked by one membership level if the user also has access to that content through another category.
+* BUG/ENHANCEMENT: Running email body through wpautop if it doesn't look like HTML.
+* ENHANCEMENT: Added pmpro_getfile_before_error hook in getfile.php.
+* ENHANCEMENT: Added pmpro_ipn_check_receiver_email filter if you want to change how the email is checked in the IPN log.
+* BUG: Fixed bug where reports would show duplicate month labels on the last day of the month.
+* BUG: Fixed some issues with logging in at checkout, especially when using FORCE_SSL_ADMIN. (Thanks, Wimans)
+* ENHANCEMENT: Added "pending" as a default status for orders available on the edit order page in the dashboard.
+
 = 1.7.14.2 =
 * BUG: Removed the debug call to d($...) that was left in preheaders/checkout.php and would show up when checkout forms were submitted with empty fields. (Thanks, Nicolas)
 
