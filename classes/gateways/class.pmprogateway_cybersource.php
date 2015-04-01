@@ -1,15 +1,129 @@
 <?php	
+	//include pmprogateway
 	require_once(dirname(__FILE__) . "/class.pmprogateway.php");
-	if(!class_exists("CyberSourceSoapClient"))
-		require_once(dirname(__FILE__) . "/../../includes/lib/CyberSource/cyber_source_soap_client.php");
-	class PMProGateway_cybersource
+	
+	//load classes init method
+	add_action('init', array('PMProGateway_cybersource', 'init'));
+	
+	class PMProGateway_cybersource extends PMProGateway
 	{
 		function PMProGateway_cybersource($gateway = NULL)
 		{
+			if(!class_exists("CyberSourceSoapClient"))
+				require_once(dirname(__FILE__) . "/../../includes/lib/CyberSource/cyber_source_soap_client.php");
+			
 			$this->gateway = $gateway;
 			return $this->gateway;
 		}										
 		
+		/**
+		 * Run on WP init
+		 *		 
+		 * @since 1.8
+		 */
+		static function init()
+		{			
+			//make sure CyberSource is a gateway option
+			add_filter('pmpro_gateways', array('PMProGateway_cybersource', 'pmpro_gateways'));
+			
+			//add fields to payment settings
+			add_filter('pmpro_payment_options', array('PMProGateway_cybersource', 'pmpro_payment_options'));
+			add_filter('pmpro_payment_option_fields', array('PMProGateway_cybersource', 'pmpro_payment_option_fields'), 10, 2);						
+		}
+		
+		/**
+		 * Make sure this gateway is in the gateways list
+		 *		 
+		 * @since 1.8
+		 */
+		static function pmpro_gateways($gateways)
+		{
+			if(empty($gateways['cybersource']))
+				$gateways['cybersource'] = __('CyberSource', 'pmpro');
+		
+			return $gateways;
+		}
+		
+		/**
+		 * Get a list of payment options that the this gateway needs/supports.
+		 *		 
+		 * @since 1.8
+		 */
+		static function getGatewayOptions()
+		{			
+			$options = array(
+				'sslseal',
+				'nuclear_HTTPS',
+				'gateway_environment',
+				'cybersource_merchantid',
+				'cybersource_securitykey',
+				'currency',
+				'use_ssl',
+				'tax_state',
+				'tax_rate',
+				'accepted_credit_cards'
+			);
+			
+			return $options;
+		}
+		
+		/**
+		 * Set payment options for payment settings page.
+		 *		 
+		 * @since 1.8
+		 */
+		static function pmpro_payment_options($options)
+		{			
+			//get stripe options
+			$cybersource_options = PMProGateway_cybersource::getGatewayOptions();
+			
+			//merge with others.
+			$options = array_merge($cybersource_options, $options);
+			
+			return $options;
+		}
+		
+		/**
+		 * Display fields for this gateway's options.
+		 *		 
+		 * @since 1.8
+		 */
+		static function pmpro_payment_option_fields($values, $gateway)
+		{
+		?>
+		<tr class="pmpro_settings_divider gateway gateway_cybersource" <?php if($gateway != "cybersource") { ?>style="display: none;"<?php } ?>>
+			<td colspan="2">
+				<?php _e('CyberSource Settings', 'pmpro'); ?>
+			</td>
+		</tr>
+		<tr class="gateway gateway_cybersource" <?php if($gateway != "cybersource") { ?>style="display: none;"<?php } ?>>
+			<td colspan="2">
+				<strong><?php _e('Note', 'pmpro');?>:</strong> <?php _e('This gateway option is in beta. Some functionality may not be available. Please contact Paid Memberships Pro with any issues you run into. <strong>Please be sure to upgrade Paid Memberships Pro to the latest versions when available.</strong>', 'pmpro');?>
+			</td>	
+		</tr>
+		<tr class="gateway gateway_cybersource" <?php if($gateway != "cybersource") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">
+				<label for="cybersource_merchantid"><?php _e('Merchant ID', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<input type="text" id="cybersource_merchantid" name="cybersource_merchantid" size="60" value="<?php echo esc_attr($values['cybersource_merchantid'])?>" />
+			</td>
+		</tr>
+		<tr class="gateway gateway_cybersource" <?php if($gateway != "cybersource") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">
+				<label for="cybersource_securitykey"><?php _e('Transaction Security Key', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<textarea id="cybersource_securitykey" name="cybersource_securitykey" rows="3" cols="80"><?php echo esc_textarea($values['cybersource_securitykey']);?></textarea>					
+			</td>
+		</tr>
+		<?php
+		}
+		
+		/**
+		 * Process checkout.
+		 *
+		 */
 		function process(&$order)
 		{
 			//check for initial payment
@@ -183,6 +297,8 @@
 		
 		function authorize(&$order)
 		{
+			global $pmpro_currency;
+			
 			if(empty($order->code))
 				$order->code = $order->getRandomCode();
 						
@@ -239,7 +355,7 @@
 
 			//currency
 			$purchaseTotals = new stdClass();
-			$purchaseTotals->currency = pmpro_getOption("currency");
+			$purchaseTotals->currency = $pmpro_currency;
 			$request->purchaseTotals = $purchaseTotals;
 
 			//item/price
@@ -315,6 +431,8 @@
 		
 		function charge(&$order)
 		{
+			global $pmpro_currency;
+			
 			//get a code
 			if(empty($order->code))
 				$order->code = $order->getRandomCode();
@@ -382,7 +500,7 @@
 
 			//currency
 			$purchaseTotals = new stdClass();
-			$purchaseTotals->currency = pmpro_getOption("currency");
+			$purchaseTotals->currency = $pmpro_currency;
 			$request->purchaseTotals = $purchaseTotals;
 
 			//item/price
@@ -416,6 +534,8 @@
 		
 		function subscribe(&$order)
 		{
+			global $currency;
+			
 			//create a code for the order
 			if(empty($order->code))
 				$order->code = $order->getRandomCode();
@@ -577,7 +697,7 @@
 
 			//currency
 			$purchaseTotals = new stdClass();
-			$purchaseTotals->currency = pmpro_getOption("currency");
+			$purchaseTotals->currency = $pmpro_currency;
 			$request->purchaseTotals = $purchaseTotals;			
 			
 			$soapClient = new CyberSourceSoapClient($wsdl_url, array("merchantID"=>pmpro_getOption("cybersource_merchantid"), "transactionKey"=>pmpro_getOption("cybersource_securitykey")));

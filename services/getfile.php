@@ -70,6 +70,7 @@
 		{
 			if(!pmpro_has_membership_access($file_post_parent))
 			{
+				//hook for users without access
 				do_action("pmpro_getfile_before_error", $filename, $file_post_parent);
 				
 				//nope				

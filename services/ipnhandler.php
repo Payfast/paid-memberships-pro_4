@@ -216,7 +216,7 @@
 				}
 				else
 				{				
-					pmpro_changeMembershipLevel(0, $last_subscr_order->user_id);
+					pmpro_changeMembershipLevel(0, $last_subscr_order->user_id, 'cancelled');
 					
 					ipnlog("Cancelled membership for user with id = " . $last_subscr_order->user_id . ". Subscription transaction id = " . $recurring_payment_id . ".");	
 					
@@ -276,7 +276,7 @@
 				}
 				else
 				{				
-					pmpro_changeMembershipLevel(0, $last_subscr_order->user_id);
+					pmpro_changeMembershipLevel(0, $last_subscr_order->user_id, 'cancelled');
 					
 					ipnlog("Canceled membership for user with id = " . $last_subscr_order->user_id . ". Subscription transaction id = " . $subscr_id . ".");	
 					
@@ -619,6 +619,13 @@
 			$morder->membership_id = $last_order->membership_id;			
 			$morder->payment_transaction_id = $txn_id;
 			$morder->subscription_transaction_id = $last_order->subscription_transaction_id;
+			$morder->gateway = $last_order->gateway;
+			$morder->gateway_environment = $last_order->gateway_environment;
+			
+			// Payment Status
+			$morder->status = 'success'; // We have confirmed that and thats the reason we are here.
+			// Payment Type.
+			$morder->payment_type = $last_order->payment_type;
 			
 			//set amount based on which PayPal type
 			if($last_order->gateway == "paypal")

@@ -1,8 +1,6 @@
 <?php		
 	global $gateway, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $wpdb, $current_user, $pmpro_msg, $pmpro_msgt, $pmpro_requirebilling, $pmpro_level, $pmpro_levels, $tospage, $pmpro_show_discount_code, $pmpro_error_fields;
-	global $discount_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth,$ExpirationYear;	
-	
-	$pmpro_stripe_lite = apply_filters("pmpro_stripe_lite", !pmpro_getOption("stripe_billingaddress"));	//default is oposite of the stripe_billingaddress setting
+	global $discount_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth,$ExpirationYear;		
 ?>
 <div id="pmpro_level-<?php echo $pmpro_level->id; ?>">
 <form id="pmpro_form" class="pmpro_form" action="<?php if(!empty($_REQUEST['review'])) echo pmpro_url("checkout", "?level=" . $pmpro_level->id); ?>" method="post">
@@ -32,7 +30,7 @@
 	<thead>
 		<tr>
 			<th>
-				<?php if(count($pmpro_levels) > 1) { ?><span class="pmpro_thead-msg"><a href="<?php echo pmpro_url("levels"); ?>"><?php _ex('change', 'change membership level link', 'pmpro');?></a></span><?php } ?><?php _e('Membership Level', 'pmpro');?>
+				<?php if(count($pmpro_levels) > 1) { ?><span class="pmpro_thead-msg"><a href="<?php echo pmpro_url("levels"); ?>"><?php _e('change', 'pmpro');?></a></span><?php } ?><?php _e('Membership Level', 'pmpro');?>
 			</th>						
 		</tr>
 	</thead>
@@ -293,8 +291,12 @@
 		</table>
 	<?php } ?>
 	
-	<?php if(empty($pmpro_stripe_lite) || $gateway != "stripe") { ?>
-	<table id="pmpro_billing_address_fields" class="pmpro_checkout top1em" width="100%" cellpadding="0" cellspacing="0" border="0" <?php if(!$pmpro_requirebilling || $gateway == "paypalexpress" || $gateway == "paypalstandard" || $gateway == "twocheckout") { ?>style="display: none;"<?php } ?>>
+	<?php 
+		$pmpro_include_billing_address_fields = apply_filters('pmpro_include_billing_address_fields', true);
+		if($pmpro_include_billing_address_fields)
+		{
+	?>
+	<table id="pmpro_billing_address_fields" class="pmpro_checkout top1em" width="100%" cellpadding="0" cellspacing="0" border="0" <?php if(!$pmpro_requirebilling || apply_filters("pmpro_hide_billing_address_fields", false) ){ ?>style="display: none;"<?php } ?>>
 	<thead>
 		<tr>
 			<th><?php _e('Billing Address', 'pmpro');?></th>
@@ -472,107 +474,135 @@
 		$pmpro_accepted_credit_cards_string = pmpro_implodeToEnglish($pmpro_accepted_credit_cards);	
 	?>
 	
-	<table id="pmpro_payment_information_fields" class="pmpro_checkout top1em" width="100%" cellpadding="0" cellspacing="0" border="0" <?php if(!$pmpro_requirebilling || $gateway == "paypalexpress" || $gateway == "paypalstandard" || $gateway == "twocheckout" || $gateway == "payfast") { ?>style="display: none;"<?php } ?>>
-	<thead>
-		<tr>
-			<th><span class="pmpro_thead-msg"><?php printf(__('We Accept %s', 'pmpro'), $pmpro_accepted_credit_cards_string);?></span><?php _e('Payment Information', 'pmpro');?></th>
-		</tr>
-	</thead>
-	<tbody>                    
-		<tr valign="top">		
-			<td>	
-				<?php
-					$sslseal = pmpro_getOption("sslseal");
-					if($sslseal)
-					{
-					?>
-						<div class="pmpro_sslseal"><?php echo stripslashes($sslseal)?></div>
+	<?php		
+		$pmpro_include_payment_information_fields = apply_filters("pmpro_include_payment_information_fields", true);
+		if($pmpro_include_payment_information_fields)
+		{
+		?>
+		<table id="pmpro_payment_information_fields" class="pmpro_checkout top1em" width="100%" cellpadding="0" cellspacing="0" border="0" <?php if(!$pmpro_requirebilling || apply_filters("pmpro_hide_payment_information_fields", false) ) { ?>style="display: none;"<?php } ?>>
+		<thead>
+			<tr>
+				<th><span class="pmpro_thead-msg"><?php printf(__('We Accept %s', 'pmpro'), $pmpro_accepted_credit_cards_string);?></span><?php _e('Payment Information', 'pmpro');?></th>
+			</tr>
+		</thead>
+		<tbody>                    
+			<tr valign="top">		
+				<td>	
 					<?php
-					}
-				?>				
-				<input type="hidden" id="CardType" name="CardType" value="<?php echo esc_attr($CardType);?>" />
-				<script>
-					jQuery(document).ready(function() {												
-							jQuery('#AccountNumber').validateCreditCard(function(result) {								
-								var cardtypenames = {
-									"amex":"American Express",
-									"diners_club_carte_blanche":"Diners Club Carte Blanche",
-									"diners_club_international":"Diners Club International",
-									"discover":"Discover",
-									"jcb":"JCB",
-									"laser":"Laser",
-									"maestro":"Maestro",
-									"mastercard":"Mastercard",
-									"visa":"Visa",
-									"visa_electron":"Visa Electron"
+						$sslseal = pmpro_getOption("sslseal");
+						if($sslseal)
+						{				
+						?>
+							<div class="pmpro_sslseal"><?php echo stripslashes($sslseal)?></div>
+						<?php
+						}
+					?>
+					
+					<?php 
+						$pmpro_include_cardtype_field = apply_filters('pmpro_include_cardtype_field', false);
+						if($pmpro_include_cardtype_field) 
+						{
+						?>
+						<div class="pmpro_payment-card-type">
+							<label for="CardType"><?php _e('Card Type', 'pmpro');?></label>
+							<select id="CardType" name="CardType" class=" <?php echo pmpro_getClassForField("CardType");?>">
+								<?php foreach($pmpro_accepted_credit_cards as $cc) { ?>
+									<option value="<?php echo $cc?>" <?php if($CardType == $cc) { ?>selected="selected"<?php } ?>><?php echo $cc?></option>
+								<?php } ?>												
+							</select> 
+						</div>
+						<?php 
+						} 
+						else
+						{
+						?>
+						<input type="hidden" id="CardType" name="CardType" value="<?php echo esc_attr($CardType);?>" />
+						<script>
+							jQuery(document).ready(function() {												
+									jQuery('#AccountNumber').validateCreditCard(function(result) {								
+										var cardtypenames = {
+											"amex":"American Express",
+											"diners_club_carte_blanche":"Diners Club Carte Blanche",
+											"diners_club_international":"Diners Club International",
+											"discover":"Discover",
+											"jcb":"JCB",
+											"laser":"Laser",
+											"maestro":"Maestro",
+											"mastercard":"Mastercard",
+											"visa":"Visa",
+											"visa_electron":"Visa Electron"
+										}
+										
+										if(result.card_type)
+											jQuery('#CardType').val(cardtypenames[result.card_type.name]);
+										else
+											jQuery('#CardType').val('Unknown Card Type');
+									});						
+							});
+						</script>
+						<?php
+						}
+					?>
+				
+					<div class="pmpro_payment-account-number">
+						<label for="AccountNumber"><?php _e('Card Number', 'pmpro');?></label>
+						<input id="AccountNumber" name="AccountNumber" class="input <?php echo pmpro_getClassForField("AccountNumber");?>" type="text" size="25" value="<?php echo esc_attr($AccountNumber)?>" data-encrypted-name="number" autocomplete="off" /> 
+					</div>
+				
+					<div class="pmpro_payment-expiration">
+						<label for="ExpirationMonth"><?php _e('Expiration Date', 'pmpro');?></label>
+						<select id="ExpirationMonth" name="ExpirationMonth" class=" <?php echo pmpro_getClassForField("ExpirationMonth");?>">
+							<option value="01" <?php if($ExpirationMonth == "01") { ?>selected="selected"<?php } ?>>01</option>
+							<option value="02" <?php if($ExpirationMonth == "02") { ?>selected="selected"<?php } ?>>02</option>
+							<option value="03" <?php if($ExpirationMonth == "03") { ?>selected="selected"<?php } ?>>03</option>
+							<option value="04" <?php if($ExpirationMonth == "04") { ?>selected="selected"<?php } ?>>04</option>
+							<option value="05" <?php if($ExpirationMonth == "05") { ?>selected="selected"<?php } ?>>05</option>
+							<option value="06" <?php if($ExpirationMonth == "06") { ?>selected="selected"<?php } ?>>06</option>
+							<option value="07" <?php if($ExpirationMonth == "07") { ?>selected="selected"<?php } ?>>07</option>
+							<option value="08" <?php if($ExpirationMonth == "08") { ?>selected="selected"<?php } ?>>08</option>
+							<option value="09" <?php if($ExpirationMonth == "09") { ?>selected="selected"<?php } ?>>09</option>
+							<option value="10" <?php if($ExpirationMonth == "10") { ?>selected="selected"<?php } ?>>10</option>
+							<option value="11" <?php if($ExpirationMonth == "11") { ?>selected="selected"<?php } ?>>11</option>
+							<option value="12" <?php if($ExpirationMonth == "12") { ?>selected="selected"<?php } ?>>12</option>
+						</select>/<select id="ExpirationYear" name="ExpirationYear" class=" <?php echo pmpro_getClassForField("ExpirationYear");?>">
+							<?php
+								for($i = date("Y"); $i < date("Y") + 10; $i++)
+								{
+							?>
+								<option value="<?php echo $i?>" <?php if($ExpirationYear == $i) { ?>selected="selected"<?php } ?>><?php echo $i?></option>
+							<?php
 								}
-								
-								if(result.card_type)
-									jQuery('#CardType').val(cardtypenames[result.card_type.name]);
-								else
-									jQuery('#CardType').val('Unknown Card Type');
-							});						
-					});
-				</script>
-			
-				<div class="pmpro_payment-account-number">
-					<label for="AccountNumber"><?php _e('Card Number', 'pmpro');?></label>
-					<input id="AccountNumber" <?php if($gateway != "stripe" && $gateway != "braintree") { ?>name="AccountNumber"<?php } ?> class="input <?php echo pmpro_getClassForField("AccountNumber");?>" type="text" size="25" value="<?php echo esc_attr($AccountNumber)?>" <?php if($gateway == "braintree") { ?>data-encrypted-name="number"<?php } ?> autocomplete="off" /> 
-				</div>
-			
-				<div class="pmpro_payment-expiration">
-					<label for="ExpirationMonth"><?php _e('Expiration Date', 'pmpro');?></label>
-					<select id="ExpirationMonth" <?php if($gateway != "stripe") { ?>name="ExpirationMonth"<?php } ?> class=" <?php echo pmpro_getClassForField("ExpirationMonth");?>">
-						<option value="01" <?php if($ExpirationMonth == "01") { ?>selected="selected"<?php } ?>>01</option>
-						<option value="02" <?php if($ExpirationMonth == "02") { ?>selected="selected"<?php } ?>>02</option>
-						<option value="03" <?php if($ExpirationMonth == "03") { ?>selected="selected"<?php } ?>>03</option>
-						<option value="04" <?php if($ExpirationMonth == "04") { ?>selected="selected"<?php } ?>>04</option>
-						<option value="05" <?php if($ExpirationMonth == "05") { ?>selected="selected"<?php } ?>>05</option>
-						<option value="06" <?php if($ExpirationMonth == "06") { ?>selected="selected"<?php } ?>>06</option>
-						<option value="07" <?php if($ExpirationMonth == "07") { ?>selected="selected"<?php } ?>>07</option>
-						<option value="08" <?php if($ExpirationMonth == "08") { ?>selected="selected"<?php } ?>>08</option>
-						<option value="09" <?php if($ExpirationMonth == "09") { ?>selected="selected"<?php } ?>>09</option>
-						<option value="10" <?php if($ExpirationMonth == "10") { ?>selected="selected"<?php } ?>>10</option>
-						<option value="11" <?php if($ExpirationMonth == "11") { ?>selected="selected"<?php } ?>>11</option>
-						<option value="12" <?php if($ExpirationMonth == "12") { ?>selected="selected"<?php } ?>>12</option>
-					</select>/<select id="ExpirationYear" <?php if($gateway != "stripe") { ?>name="ExpirationYear"<?php } ?> class=" <?php echo pmpro_getClassForField("ExpirationYear");?>">
-						<?php
-							for($i = date("Y"); $i < date("Y") + 10; $i++)
-							{
-						?>
-							<option value="<?php echo $i?>" <?php if($ExpirationYear == $i) { ?>selected="selected"<?php } ?>><?php echo $i?></option>
-						<?php
-							}
-						?>
-					</select> 					
-				</div>
-			
-				<?php
-					$pmpro_show_cvv = apply_filters("pmpro_show_cvv", true);
-					if($pmpro_show_cvv)
-					{
-				?>
-				<div class="pmpro_payment-cvv">
-					<label for="CVV"><?php _ex('CVV', 'Credit card security code, CVV/CCV/CVV2', 'pmpro');?></label>
-					<input id="CVV" <?php if($gateway != "stripe" && $gateway != "braintree") { ?>name="CVV"<?php } ?> type="text" size="4" value="<?php if(!empty($_REQUEST['CVV'])) { echo esc_attr($_REQUEST['CVV']); }?>" class="input <?php echo pmpro_getClassForField("CVV");?>" <?php if($gateway == "braintree") { ?>data-encrypted-name="cvv"<?php } ?> />  <small>(<a href="javascript:void(0);" onclick="javascript:window.open('<?php echo pmpro_https_filter(PMPRO_URL)?>/pages/popup-cvv.html','cvv','toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=600, height=475');"><?php _ex("what's this?", 'link to CVV help', 'pmpro');?></a>)</small>
-				</div>
-				<?php
-					}
-				?>
+							?>
+						</select> 					
+					</div>
 				
-				<?php if($pmpro_show_discount_code) { ?>
-				<div class="pmpro_payment-discount-code">
-					<label for="discount_code"><?php _e('Discount Code', 'pmpro');?></label>
-					<input class="input <?php echo pmpro_getClassForField("discount_code");?>" id="discount_code" name="discount_code" type="text" size="20" value="<?php echo esc_attr($discount_code)?>" />
-					<input type="button" id="discount_code_button" name="discount_code_button" value="<?php _e('Apply', 'pmpro');?>" />
-					<p id="discount_code_message" class="pmpro_message" style="display: none;"></p>
-				</div>
-				<?php } ?>
-				
-			</td>			
-		</tr>
-	</tbody>
-	</table>	
+					<?php
+						$pmpro_show_cvv = apply_filters("pmpro_show_cvv", true);
+						if($pmpro_show_cvv)
+						{
+					?>
+					<div class="pmpro_payment-cvv">
+						<label for="CVV"><?php _ex('CVV', 'Credit card security code, CVV/CCV/CVV2', 'pmpro');?></label>
+						<input class="input" id="CVV" name="CVV" type="text" size="4" value="<?php if(!empty($_REQUEST['CVV'])) { echo esc_attr($_REQUEST['CVV']); }?>" class=" <?php echo pmpro_getClassForField("CVV");?>" />  <small>(<a href="javascript:void(0);" onclick="javascript:window.open('<?php echo pmpro_https_filter(PMPRO_URL)?>/pages/popup-cvv.html','cvv','toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=600, height=475');"><?php _ex("what's this?", 'link to CVV help', 'pmpro');?></a>)</small>
+					</div>
+					<?php
+						}
+					?>
+					
+					<?php if($pmpro_show_discount_code) { ?>
+					<div class="pmpro_payment-discount-code">
+						<label for="discount_code"><?php _e('Discount Code', 'pmpro');?></label>
+						<input class="input <?php echo pmpro_getClassForField("discount_code");?>" id="discount_code" name="discount_code" type="text" size="20" value="<?php echo esc_attr($discount_code)?>" />
+						<input type="button" id="discount_code_button" name="discount_code_button" value="<?php _e('Apply', 'pmpro');?>" />
+						<p id="discount_code_message" class="pmpro_message" style="display: none;"></p>
+					</div>
+					<?php } ?>
+					
+				</td>			
+			</tr>
+		</tbody>
+		</table>
+	<?php } ?>
 	<script>
 		//checking a discount code
 		jQuery('#discount_code_button').click(function() {
@@ -622,38 +652,7 @@
 			echo '<div class="pmpro_check_instructions">' . wpautop($instructions) . '</div>';
 		}
 	?>
-	
-	<?php if($gateway == "braintree") { ?>						  
-		<input type='hidden' data-encrypted-name='expiration_date' id='credit_card_exp' />
-		<input type='hidden' name='AccountNumber' id='BraintreeAccountNumber' />
-		<script type="text/javascript" src="https://js.braintreegateway.com/v1/braintree.js"></script>
-		<script type="text/javascript">
-			//setup braintree encryption
-			var braintree = Braintree.create('<?php echo pmpro_getOption("braintree_encryptionkey"); ?>');
-			braintree.onSubmitEncryptForm('pmpro_form');
-
-			//pass expiration dates in original format
-			function pmpro_updateBraintreeCardExp()
-			{
-				jQuery('#credit_card_exp').val(jQuery('#ExpirationMonth').val() + "/" + jQuery('#ExpirationYear').val());
-			}
-			jQuery('#ExpirationMonth, #ExpirationYear').change(function() {
-				pmpro_updateBraintreeCardExp();
-			});
-			pmpro_updateBraintreeCardExp();
-			
-			//pass last 4 of credit card
-			function pmpro_updateBraintreeAccountNumber()
-			{
-				jQuery('#BraintreeAccountNumber').val('XXXXXXXXXXXXX' + jQuery('#AccountNumber').val().substr(jQuery('#AccountNumber').val().length - 4));
-			}
-			jQuery('#AccountNumber').change(function() {
-				pmpro_updateBraintreeAccountNumber();
-			});
-			pmpro_updateBraintreeAccountNumber();
-		</script>
-	<?php } ?>
-	
+		
 	<?php					
 		if($tospage && !$pmpro_review)
 		{						
@@ -693,19 +692,21 @@
 				<input type="submit" class="pmpro_btn pmpro_btn-submit-checkout" value="<?php _e('Complete Payment', 'pmpro');?> &raquo;" />
 			</span>
 				
-		<?php } else { ?>
-					
-			<?php if($gateway == "paypal" || $gateway == "paypalexpress" || $gateway == "paypalstandard") { ?>
-			<span id="pmpro_paypalexpress_checkout" <?php if(($gateway != "paypalexpress" && $gateway != "paypalstandard") || !$pmpro_requirebilling) { ?>style="display: none;"<?php } ?>>
-				<input type="hidden" name="submit-checkout" value="1" />		
-				<input type="image" value="<?php _e('Check Out with PayPal', 'pmpro');?> &raquo;" src="<?php echo apply_filters("pmpro_paypal_button_image", "https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif");?>" />
-			</span>
-			<?php } ?>
+		<?php } else { ?>								
 			
-			<span id="pmpro_submit_span" <?php if(($gateway == "paypalexpress" || $gateway == "paypalstandard") && $pmpro_requirebilling) { ?>style="display: none;"<?php } ?>>
-				<input type="hidden" name="submit-checkout" value="1" />		
-				<input type="submit" class="pmpro_btn pmpro_btn-submit-checkout" value="<?php if($pmpro_requirebilling) { if($gateway == "twocheckout") { _e('Submit and Pay with 2CheckOut', 'pmpro'); } else { _e('Submit and Check Out', 'pmpro'); } } else { _e('Submit and Confirm', 'pmpro');}?> &raquo;" />				
-			</span>
+			<?php 
+				$pmpro_checkout_default_submit_button = apply_filters('pmpro_checkout_default_submit_button', true);
+				if($pmpro_checkout_default_submit_button)
+				{
+				?>			
+				<span id="pmpro_submit_span">
+					<input type="hidden" name="submit-checkout" value="1" />		
+					<input type="submit" class="pmpro_btn pmpro_btn-submit-checkout" value="<?php if($pmpro_requirebilling) { _e('Submit and Check Out', 'pmpro'); } else { _e('Submit and Confirm', 'pmpro');}?> &raquo;" />				
+				</span>
+				<?php
+				}
+			?>
+			
 		<?php } ?>
 		
 		<span id="pmpro_processing_message" style="visibility: hidden;">
@@ -717,43 +718,34 @@
 	</div>	
 		
 </form>
+
+<?php do_action('pmpro_checkout_after_form'); ?>
+
 </div> <!-- end pmpro_level-ID -->
-<?php if($gateway == "paypal" || $gateway == "paypalexpress") { ?>
-<script>	
-	//choosing payment method
-	jQuery('input[name=gateway]').click(function() {		
-		if(jQuery(this).val() == 'paypal')
-		{
-			jQuery('#pmpro_paypalexpress_checkout').hide();
-			jQuery('#pmpro_billing_address_fields').show();
-			jQuery('#pmpro_payment_information_fields').show();			
-			jQuery('#pmpro_submit_span').show();
-		}
-		else
-		{			
-			jQuery('#pmpro_billing_address_fields').hide();
-			jQuery('#pmpro_payment_information_fields').hide();			
-			jQuery('#pmpro_submit_span').hide();
-			jQuery('#pmpro_paypalexpress_checkout').show();
-		}
-	});
-	
-	//select the radio button if the label is clicked on
-	jQuery('a.pmpro_radio').click(function() {
-		jQuery(this).prev().click();
-	});
-</script>
-<?php } ?>
 
 <script>	
 <!--
 	// Find ALL <form> tags on your page
-	jQuery('form').submit(function(){
+	jQuery('form').submit(function(){				
 		// On submit disable its submit button
 		jQuery('input[type=submit]', this).attr('disabled', 'disabled');
 		jQuery('input[type=image]', this).attr('disabled', 'disabled');
-		jQuery('#pmpro_processing_message').css('visibility', 'visible');
+		jQuery('#pmpro_processing_message').css('visibility', 'visible');				
 	});
+	
+	//iOS Safari fix (see: http://stackoverflow.com/questions/20210093/stop-safari-on-ios7-prompting-to-save-card-data)
+	var userAgent = window.navigator.userAgent;
+	if(userAgent.match(/iPad/i) || userAgent.match(/iPhone/i)) {
+		jQuery('input[type=submit]').click(function() {
+			try{
+				jQuery("input[type=password]").attr("type", "hidden");
+			} catch(ex){
+				try {
+					jQuery("input[type=password]").prop("type", "hidden");
+				} catch(ex) {}
+			}				
+		});
+	}
 	
 	//add required to required fields
 	jQuery('.pmpro_required').after('<span class="pmpro_asterisk"> *</span>');

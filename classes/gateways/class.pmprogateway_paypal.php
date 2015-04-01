@@ -1,6 +1,11 @@
 <?php
+	//include pmprogateway
 	require_once(dirname(__FILE__) . "/class.pmprogateway.php");
-	class PMProGateway_paypal
+	
+	//load classes init method
+	add_action('init', array('PMProGateway_paypal', 'init'));
+	
+	class PMProGateway_paypal extends PMProGateway
 	{
 		function PMProGateway_paypal($gateway = NULL)
 		{
@@ -8,6 +13,221 @@
 			return $this->gateway;
 		}										
 		
+		/**
+		 * Run on WP init
+		 *		 
+		 * @since 1.8
+		 */
+		static function init()
+		{			
+			//make sure PayPal Website Payments Pro is a gateway option
+			add_filter('pmpro_gateways', array('PMProGateway_paypal', 'pmpro_gateways'));
+			
+			//add fields to payment settings
+			add_filter('pmpro_payment_options', array('PMProGateway_paypal', 'pmpro_payment_options'));
+			
+			/*
+				This code is the same for PayPal Website Payments Pro, PayPal Express, and PayPal Standard
+				So we only load it if we haven't already.
+			*/
+			global $pmpro_payment_option_fields_for_paypal;
+			if(empty($pmpro_payment_option_fields_for_paypal))
+			{				
+				add_filter('pmpro_payment_option_fields', array('PMProGateway_paypal', 'pmpro_payment_option_fields'), 10, 2);						
+				$pmpro_payment_option_fields_for_paypal = true;
+			}
+			
+			//code to add at checkout
+			$gateway = pmpro_getGateway();
+			if($gateway == "paypal")
+			{				
+				add_filter('pmpro_checkout_default_submit_button', array('PMProGateway_paypal', 'pmpro_checkout_default_submit_button'));
+				add_action('pmpro_checkout_after_form', array('PMProGateway_paypal', 'pmpro_checkout_after_form'));
+			}
+		}
+		
+		/**
+		 * Make sure this gateway is in the gateways list
+		 *		 
+		 * @since 1.8
+		 */
+		static function pmpro_gateways($gateways)
+		{
+			if(empty($gateways['paypal']))
+				$gateways['paypal'] = __('PayPal Website Payments Pro', 'pmpro');
+		
+			return $gateways;
+		}
+		
+		/**
+		 * Get a list of payment options that the this gateway needs/supports.
+		 *		 
+		 * @since 1.8
+		 */
+		static function getGatewayOptions()
+		{			
+			$options = array(
+				'sslseal',
+				'nuclear_HTTPS',
+				'gateway_environment',
+				'gateway_email',
+				'apiusername',
+				'apipassword',
+				'apisignature',
+				'currency',
+				'use_ssl',
+				'tax_state',
+				'tax_rate',
+				'accepted_credit_cards'
+			);
+			
+			return $options;
+		}
+		
+		/**
+		 * Set payment options for payment settings page.
+		 *		 
+		 * @since 1.8
+		 */
+		static function pmpro_payment_options($options)
+		{			
+			//get stripe options
+			$paypal_options = PMProGateway_paypal::getGatewayOptions();
+			
+			//merge with others.
+			$options = array_merge($paypal_options, $options);
+			
+			return $options;
+		}
+		
+		/**
+		 * Display fields for this gateway's options.
+		 *		 
+		 * @since 1.8
+		 */
+		static function pmpro_payment_option_fields($values, $gateway)
+		{
+		?>
+		<tr class="pmpro_settings_divider gateway gateway_paypal gateway_paypalexpress gateway_paypalstandard" <?php if($gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard") { ?>style="display: none;"<?php } ?>>
+			<td colspan="2">
+				<?php _e('PayPal Settings', 'pmpro'); ?>
+			</td>
+		</tr>		
+		<tr class="gateway gateway_paypalstandard" <?php if($gateway != "paypalstandard") { ?>style="display: none;"<?php } ?>>
+			<td colspan="2">
+				<strong><?php _e('Note', 'pmpro');?>:</strong> <?php _e('We do not recommend using PayPal Standard. We suggest using PayPal Express, Website Payments Pro (Legacy), or PayPal Pro (Payflow Pro). <a target="_blank" href="http://www.paidmembershipspro.com/2013/09/read-using-paypal-standard-paid-memberships-pro/">More information on why can be found here.</a>', 'pmpro');?>
+			</td>	
+		</tr>	
+		<tr class="gateway gateway_paypal gateway_paypalexpress gateway_paypalstandard" <?php if($gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">	
+				<label for="gateway_email"><?php _e('Gateway Account Email', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<input type="text" id="gateway_email" name="gateway_email" size="60" value="<?php echo esc_attr($values['gateway_email'])?>" />
+			</td>
+		</tr>                
+		<tr class="gateway gateway_paypal gateway_paypalexpress" <?php if($gateway != "paypal" && $gateway != "paypalexpress") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">
+				<label for="apiusername"><?php _e('API Username', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<input type="text" id="apiusername" name="apiusername" size="60" value="<?php echo esc_attr($values['apiusername'])?>" />
+			</td>
+		</tr>
+		<tr class="gateway gateway_paypal gateway_paypalexpress" <?php if($gateway != "paypal" && $gateway != "paypalexpress") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">
+				<label for="apipassword"><?php _e('API Password', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<input type="text" id="apipassword" name="apipassword" size="60" value="<?php echo esc_attr($values['apipassword'])?>" />
+			</td>
+		</tr> 
+		<tr class="gateway gateway_paypal gateway_paypalexpress" <?php if($gateway != "paypal" && $gateway != "paypalexpress") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">
+				<label for="apisignature"><?php _e('API Signature', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<input type="text" id="apisignature" name="apisignature" size="60" value="<?php echo esc_attr($values['apisignature'])?>" />
+			</td>
+		</tr> 
+		<tr class="gateway gateway_paypal gateway_paypalexpress gateway_paypalstandard" <?php if($gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard") { ?>style="display: none;"<?php } ?>>
+			<th scope="row" valign="top">
+				<label><?php _e('IPN Handler URL', 'pmpro');?>:</label>
+			</th>
+			<td>
+				<p><?php _e('This URL is passed to PayPal for all new charges and subscriptions. You SHOULD NOT set this in your PayPal account settings.', 'pmpro');?><pre><?php echo admin_url("admin-ajax.php") . "?action=ipnhandler";?></pre></p>
+			</td>
+		</tr>
+		<?php
+		}
+		
+		/**
+		 * Swap in our submit buttons.
+		 *
+		 * @since 1.8
+		 */
+		static function pmpro_checkout_default_submit_button($show)
+		{
+			global $gateway, $pmpro_requirebilling;
+			
+			//show our submit buttons
+			?>
+			<?php if($gateway == "paypal" || $gateway == "paypalexpress" || $gateway == "paypalstandard") { ?>
+			<span id="pmpro_paypalexpress_checkout" <?php if(($gateway != "paypalexpress" && $gateway != "paypalstandard") || !$pmpro_requirebilling) { ?>style="display: none;"<?php } ?>>
+				<input type="hidden" name="submit-checkout" value="1" />		
+				<input type="image" value="<?php _e('Check Out with PayPal', 'pmpro');?> &raquo;" src="<?php echo apply_filters("pmpro_paypal_button_image", "https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif");?>" />
+			</span>
+			<?php } ?>
+			
+			<span id="pmpro_submit_span" <?php if(($gateway == "paypalexpress" || $gateway == "paypalstandard") && $pmpro_requirebilling) { ?>style="display: none;"<?php } ?>>
+				<input type="hidden" name="submit-checkout" value="1" />		
+				<input type="submit" class="pmpro_btn pmpro_btn-submit-checkout" value="<?php if($pmpro_requirebilling) { _e('Submit and Check Out', 'pmpro'); } else { _e('Submit and Confirm', 'pmpro');}?> &raquo;" />				
+			</span>
+			<?php
+		
+			//don't show the default
+			return false;
+		}
+		
+		/**
+		 * Scripts for checkout page.
+		 *
+		 * @since 1.8
+		 */
+		static function pmpro_checkout_after_form()
+		{
+		?>
+		<script>	
+			//choosing payment method
+			jQuery('input[name=gateway]').click(function() {		
+				if(jQuery(this).val() == 'paypal')
+				{
+					jQuery('#pmpro_paypalexpress_checkout').hide();
+					jQuery('#pmpro_billing_address_fields').show();
+					jQuery('#pmpro_payment_information_fields').show();			
+					jQuery('#pmpro_submit_span').show();
+				}
+				else
+				{			
+					jQuery('#pmpro_billing_address_fields').hide();
+					jQuery('#pmpro_payment_information_fields').hide();			
+					jQuery('#pmpro_submit_span').hide();
+					jQuery('#pmpro_paypalexpress_checkout').show();
+				}
+			});
+			
+			//select the radio button if the label is clicked on
+			jQuery('a.pmpro_radio').click(function() {
+				jQuery(this).prev().click();
+			});
+		</script>
+		<?php
+		}
+		
+		/**
+		 * Process checkout.
+		 *		
+		 */
 		function process(&$order)
 		{
 			if(floatval($order->InitialPayment) == 0)
@@ -128,7 +348,7 @@
 			}					
 		}
 		
-		function void(&$order, $authorization_id)
+		function void(&$order, $authorization_id = null)
 		{
 			if(empty($authorization_id))
 				return false;
@@ -424,7 +644,7 @@
 			curl_setopt($ch, CURLOPT_POST, 1);
 		
 			// NVPRequest for submitting to server
-			$nvpreq = "METHOD=" . urlencode($methodName_) . "&VERSION=" . urlencode($version) . "&PWD=" . urlencode($API_Password) . "&USER=" . urlencode($API_UserName) . "&SIGNATURE=" . urlencode($API_Signature) . $nvpStr_;
+			$nvpreq = "METHOD=" . urlencode($methodName_) . "&VERSION=" . urlencode($version) . "&PWD=" . urlencode($API_Password) . "&USER=" . urlencode($API_UserName) . "&SIGNATURE=" . urlencode($API_Signature) . "&BUTTONSOURCE=" . urlencode(PAYPAL_BN_CODE) . $nvpStr_;
 					
 			// setting the nvpreq as POST FIELD to curl
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $nvpreq);

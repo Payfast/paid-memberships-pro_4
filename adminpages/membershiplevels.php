@@ -37,30 +37,30 @@
 
 	if($action == "save_membershiplevel")
 	{
-		$ml_name = addslashes($_REQUEST['name']);
-		$ml_description = $_REQUEST['description'];
-		$ml_confirmation = $_REQUEST['confirmation'];
-		$ml_initial_payment = addslashes($_REQUEST['initial_payment']);
+		$ml_name = stripslashes($_REQUEST['name']);
+		$ml_description = stripslashes($_REQUEST['description']);
+		$ml_confirmation = stripslashes($_REQUEST['confirmation']);
+		$ml_initial_payment = stripslashes($_REQUEST['initial_payment']);
 		if(!empty($_REQUEST['recurring']))
 			$ml_recurring = 1;
 		else
 			$ml_recurring = 0;
-		$ml_billing_amount = addslashes($_REQUEST['billing_amount']);
-		$ml_cycle_number = addslashes($_REQUEST['cycle_number']);
-		$ml_cycle_period = addslashes($_REQUEST['cycle_period']);		
-		$ml_billing_limit = addslashes($_REQUEST['billing_limit']);
+		$ml_billing_amount = stripslashes($_REQUEST['billing_amount']);
+		$ml_cycle_number = stripslashes($_REQUEST['cycle_number']);
+		$ml_cycle_period = stripslashes($_REQUEST['cycle_period']);		
+		$ml_billing_limit = stripslashes($_REQUEST['billing_limit']);
 		if(!empty($_REQUEST['custom_trial']))
 			$ml_custom_trial = 1;
 		else
 			$ml_custom_trial = 0;
-		$ml_trial_amount = addslashes($_REQUEST['trial_amount']);
-		$ml_trial_limit = addslashes($_REQUEST['trial_limit']);  
+		$ml_trial_amount = stripslashes($_REQUEST['trial_amount']);
+		$ml_trial_limit = stripslashes($_REQUEST['trial_limit']);  
 		if(!empty($_REQUEST['expiration']))
 			$ml_expiration = 1;
 		else
 			$ml_expiration = 0;
-		$ml_expiration_number = addslashes($_REQUEST['expiration_number']);
-		$ml_expiration_period = addslashes($_REQUEST['expiration_period']);
+		$ml_expiration_number = stripslashes($_REQUEST['expiration_number']);
+		$ml_expiration_period = stripslashes($_REQUEST['expiration_period']);
 		$ml_categories = array();
 		
 		//reversing disable to allow here
@@ -291,7 +291,7 @@
 				
 				<tr>
 					<th scope="row" valign="top"><label for="name"><?php _e('Name', 'pmpro');?>:</label></th>
-					<td><input name="name" type="text" size="50" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->name))?>" /></td>
+					<td><input name="name" type="text" size="50" value="<?php echo esc_attr($level->name);?>" /></td>
 				</tr>
 				
 				<tr>
@@ -300,11 +300,11 @@
 						<div id="poststuff" class="pmpro_description">						
 						<?php 							
 							if(version_compare($wp_version, "3.3") >= 0)
-								wp_editor(stripslashes($level->description), "description", array("textarea_rows"=>5)); 
+								wp_editor($level->description, "description", array("textarea_rows"=>5)); 
 							else
 							{
 							?>
-							<textarea rows="10" cols="80" name="description" id="description"><?php echo stripslashes($level->description)?></textarea>
+							<textarea rows="10" cols="80" name="description" id="description"><?php echo esc_textarea($level->description);?></textarea>
 							<?php
 							}
 						?>	
@@ -318,11 +318,11 @@
 						<div class="pmpro_confirmation">					
 						<?php 
 							if(version_compare($wp_version, "3.3") >= 0)
-								wp_editor(stripslashes($level->confirmation), "confirmation", array("textarea_rows"=>5)); 
+								wp_editor($level->confirmation, "confirmation", array("textarea_rows"=>5)); 
 							else
 							{
 							?>
-							<textarea rows="10" cols="80" name="confirmation" id="confirmation"><?php echo stripslashes($level->confirmation)?></textarea>	
+							<textarea rows="10" cols="80" name="confirmation" id="confirmation"><?php echo esc_textarea($level->confirmation);?></textarea>	
 							<?php
 							}
 						?>	
@@ -342,7 +342,7 @@
 						if(pmpro_getCurrencyPosition() == "left")
 							echo $pmpro_currency_symbol;
 						?>
-						<input name="initial_payment" type="text" size="20" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->initial_payment))?>" /> 
+						<input name="initial_payment" type="text" size="20" value="<?php echo esc_attr($level->initial_payment);?>" /> 
 						<?php
 						if(pmpro_getCurrencyPosition() == "right")
 							echo $pmpro_currency_symbol;
@@ -362,13 +362,13 @@
 						if(pmpro_getCurrencyPosition() == "left")
 							echo $pmpro_currency_symbol;
 						?>
-						<input name="billing_amount" type="text" size="20" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->billing_amount))?>" /> 
+						<input name="billing_amount" type="text" size="20" value="<?php echo esc_attr($level->billing_amount);?>" /> 
 						<?php
 						if(pmpro_getCurrencyPosition() == "right")
 							echo $pmpro_currency_symbol;
 						?>
 						<small><?php _e('per', 'pmpro');?></small>
-						<input id="cycle_number" name="cycle_number" type="text" size="10" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->cycle_number))?>" />
+						<input id="cycle_number" name="cycle_number" type="text" size="10" value="<?php echo esc_attr($level->cycle_number);?>" />
 						<select id="cycle_period" name="cycle_period">
 						  <?php
 							$cycles = array( __('Day(s)', 'pmpro') => 'Day', __('Week(s)', 'pmpro') => 'Week', __('Month(s)', 'pmpro') => 'Month', __('Year(s)', 'pmpro') => 'Year' );
@@ -428,13 +428,13 @@
 						if(pmpro_getCurrencyPosition() == "left")
 							echo $pmpro_currency_symbol;
 						?>
-						<input name="trial_amount" type="text" size="20" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->trial_amount))?>" />
+						<input name="trial_amount" type="text" size="20" value="<?php echo esc_attr($level->trial_amount);?>" />
 						<?php
 						if(pmpro_getCurrencyPosition() == "right")
 							echo $pmpro_currency_symbol;
 						?>
 						<small><?php _e('for the first', 'pmpro');?></small>
-						<input name="trial_limit" type="text" size="10" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->trial_limit))?>" />
+						<input name="trial_limit" type="text" size="10" value="<?php echo esc_attr($level->trial_limit);?>" />
 						<small><?php _e('subscription payments', 'pmpro');?>.</small>	
 						<?php if($gateway == "stripe") { ?>
 							<br /><small>
@@ -454,6 +454,7 @@
 									 
 			</tbody>
 		</table>
+				
 		<h3 class="topborder"><?php _e('Other Settings', 'pmpro');?></h3>
 		<table class="form-table">
 			<tbody>
@@ -470,7 +471,7 @@
 				<tr class="expiration_info" <?php if(!pmpro_isLevelExpiring($level)) {?>style="display: none;"<?php } ?>>
 					<th scope="row" valign="top"><label for="billing_amount"><?php _e('Expires In', 'pmpro');?>:</label></th>
 					<td>							
-						<input id="expiration_number" name="expiration_number" type="text" size="10" value="<?php echo str_replace("\"", "&quot;", stripslashes($level->expiration_number))?>" />
+						<input id="expiration_number" name="expiration_number" type="text" size="10" value="<?php echo esc_attr($level->expiration_number);?>" />
 						<select id="expiration_period" name="expiration_period">
 						  <?php
 							$cycles = array( __('Day(s)', 'pmpro') => 'Day', __('Week(s)', 'pmpro') => 'Week', __('Month(s)', 'pmpro') => 'Month', __('Year(s)', 'pmpro') => 'Year' );
@@ -522,7 +523,7 @@
 	{
 	?>							
 				
-	<h2><?php _e('Membership Levels', 'pmpro');?> <a href="admin.php?page=pmpro-membershiplevels&edit=-1" class="add-new-h2"><?php _e('Add New Level', 'pmpro');?></a></h2>
+	<h2 class="alignleft"><?php _e('Membership Levels', 'pmpro');?> <a href="admin.php?page=pmpro-membershiplevels&edit=-1" class="add-new-h2"><?php _e('Add New Level', 'pmpro');?></a></h2>
 	<form id="posts-filter" method="get" action="">			
 		<p class="search-box">
 			<label class="screen-reader-text" for="post-search-input"><?php _e('Search Levels', 'pmpro');?>:</label>
@@ -539,13 +540,9 @@
 		<tr>
 			<th><?php _e('ID', 'pmpro');?></th>
 			<th><?php _e('Name', 'pmpro');?></th>
-			<th><?php _e('Initial Payment', 'pmpro');?></th>
-			<th><?php _e('Billing Cycle', 'pmpro');?></th>        
-			<th><?php _e('Trial Cycle', 'pmpro');?></th>
+			<th><?php _e('Billing Details', 'pmpro');?></th>
 			<th><?php _e('Expiration', 'pmpro');?></th>
 			<th><?php _e('Allow Signups', 'pmpro');?></th>
-			<th></th>
-			<th></th>
 			<th></th>
 		</tr>
 	</thead>
@@ -561,31 +558,14 @@
 			foreach($levels as $level)
 			{			
 		?>
-		<tr class="<?php if(!$level->allow_signups) { ?>pmpro_gray<?php } ?> <?php if(!pmpro_checkLevelForStripeCompatibility($level) || !pmpro_checkLevelForBraintreeCompatibility($level) || !pmpro_checkLevelForPayflowCompatibility($level) || !pmpro_checkLevelForTwoCheckoutCompatibility($level)) { ?>pmpro_error<?php } ?>">			
+		<tr class="<?php if($count++ % 2 == 1) { ?>alternate<?php } ?> <?php if(!$level->allow_signups) { ?>pmpro_gray<?php } ?> <?php if(!pmpro_checkLevelForStripeCompatibility($level) || !pmpro_checkLevelForBraintreeCompatibility($level) || !pmpro_checkLevelForPayflowCompatibility($level) || !pmpro_checkLevelForTwoCheckoutCompatibility($level)) { ?>pmpro_error<?php } ?>">			
 			<td><?php echo $level->id?></td>
-			<td><?php echo $level->name?></td>
+			<td class="level_name"><a href="admin.php?page=pmpro-membershiplevels&edit=<?php echo $level->id?>"><?php echo $level->name?></a></td>
 			<td>
 				<?php if(pmpro_isLevelFree($level)) { ?>
 					<?php _e('FREE', 'pmpro');?>
 				<?php } else { ?>
-					<?php echo pmpro_formatPrice($level->initial_payment);?>
-				<?php } ?>
-			</td>
-			<td>
-				<?php if(!pmpro_isLevelRecurring($level)) { ?>
-					--
-				<?php } else { ?>						
-					<?php echo pmpro_formatPrice($level->billing_amount);?> <?php _e('every', 'pmpro');?> <?php echo $level->cycle_number.' '.pmpro_translate_billing_period($level->cycle_period,$level->cycle_number)?>
-					
-					<?php if($level->billing_limit) { ?>(<?php _e('for', 'pmpro');?> <?php echo $level->billing_limit?> <?php echo sornot($level->cycle_period,$level->billing_limit)?>)<?php } ?>
-					
-				<?php } ?>
-			</td>				
-			<td>
-				<?php if(!pmpro_isLevelTrial($level)) { ?>
-					--
-				<?php } else { ?>		
-					<?php echo pmpro_formatPrice($level->trial_amount);?> <?php _e('for', 'pmpro');?> <?php echo $level->trial_limit?> <?php echo sornot("payment",$level->trial_limit)?>
+					<?php echo str_replace( 'The price for membership is', '', pmpro_getLevelCost($level)); ?>
 				<?php } ?>
 			</td>
 			<td>
@@ -595,10 +575,9 @@
 					<?php _e('After', 'pmpro');?> <?php echo $level->expiration_number?> <?php echo sornot($level->expiration_period,$level->expiration_number)?>
 				<?php } ?>
 			</td>
-			<td><?php if($level->allow_signups) { ?><?php _e('Yes', 'pmpro');?><?php } else { ?><?php _e('No', 'pmpro');?><?php } ?></td>
-			<td align="center"><a href="admin.php?page=pmpro-membershiplevels&amp;edit=<?php echo $level->id?>" class="edit"><?php _e('edit', 'pmpro');?></a></td>
-			<td align="center"><a href="admin.php?page=pmpro-membershiplevels&amp;copy=<?php echo $level->id?>&amp;edit=-1" class="edit"><?php _e('copy', 'pmpro');?></a></td>
-			<td align="center"><a href="javascript: askfirst('<?php printf(__("Are you sure you want to delete membership level %s? All subscriptions will be cancelled.", "pmpro"), $level->name);?>','admin.php?page=pmpro-membershiplevels&amp;action=delete_membership_level&amp;deleteid=<?php echo $level->id?>'); void(0);" class="delete"><?php _e('delete', 'pmpro');?></a></td>
+			<td><?php if($level->allow_signups) { ?><a href="<?php echo pmpro_url("checkout", "?level=" . $level->id);?>"><?php _e('Yes', 'pmpro');?></a><?php } else { ?><?php _e('No', 'pmpro');?><?php } ?></td>
+
+			<td><a title="<?php _e('edit','pmpro'); ?>" href="admin.php?page=pmpro-membershiplevels&edit=<?php echo $level->id?>" class="button-primary"><?php _e('edit','pmpro'); ?></a>&nbsp;<a title="<?php _e('copy','pmpro'); ?>" href="admin.php?page=pmpro-membershiplevels&copy=<?php echo $level->id?>&edit=-1" class="button-secondary"><?php _e('copy','pmpro'); ?></a>&nbsp;<a title="<?php _e('delete','pmpro'); ?>" href="javascript: askfirst('<?php printf(__("Are you sure you want to delete membership level %s? All subscriptions will be cancelled.", "pmpro"), $level->name);?>','admin.php?page=pmpro-membershiplevels&action=delete_membership_level&deleteid=<?php echo $level->id?>'); void(0);" class="button-secondary"><?php _e('delete','pmpro'); ?></a></td>
 		</tr>
 		<?php
 			}

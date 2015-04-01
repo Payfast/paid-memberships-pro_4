@@ -28,7 +28,8 @@
 		$post_event = json_decode($body);
 			
 		//get the id
-		$event_id = $post_event->id;
+		if(!empty($post_event))
+			$event_id = $post_event->id;
 	}
 	else
 	{
@@ -36,17 +37,20 @@
 	}
 		
 	//get the event through the API now
-	try
+	if(!empty($event_id))
 	{
-		$event = Stripe_Event::retrieve($event_id);		
-	}
-	catch(Exception $e)
-	{
-		$logstr .= "Could not find an event with ID #" . $event_id . ". " . $e->getMessage();
-		pmpro_stripeWebhookExit();
-		//$event = $post_event;			//for testing you may want to assume that the passed in event is legit
-	}
-		
+		try
+		{
+			$event = Stripe_Event::retrieve($event_id);		
+		}
+		catch(Exception $e)
+		{
+			$logstr .= "Could not find an event with ID #" . $event_id . ". " . $e->getMessage();
+			pmpro_stripeWebhookExit();
+			//$event = $post_event;			//for testing you may want to assume that the passed in event is legit
+		}
+	}	
+	
 	global $wpdb;
 		
 	//real event?
@@ -89,7 +93,10 @@
 				$morder->InitialPayment = $invoice->amount / 100;	//not the initial payment, but the class is expecting that
 				$morder->PaymentAmount = $invoice->amount / 100;
 				$morder->payment_transaction_id = $invoice->id;
-				$morder->subscription_transaction_id = $invoice->customer;
+				$morder->subscription_transaction_id = $invoice->customer;					
+				
+				$morder->gateway = $old_order->gateway;
+				$morder->gateway_environment = $old_order->gateway_environment;
 				
 				$morder->FirstName = $old_order->FirstName;
 				$morder->LastName = $old_order->LastName;
@@ -100,7 +107,7 @@
 				//$morder->CountryCode = $old_order->billing->city;
 				$morder->Zip = $old_order->billing->zip;
 				$morder->PhoneNumber = $old_order->billing->phone;	
-				
+								
 				$morder->billing->name = $morder->FirstName . " " . $morder->LastName;
 				$morder->billing->street = $old_order->billing->street;
 				$morder->billing->city = $old_order->billing->city;
@@ -127,6 +134,75 @@
 				$pmproemail->sendInvoiceEmail($user, $morder);	
 				
 				$logstr .= "Created new order with ID #" . $morder->id . ". Event ID #" . $event->id . ".";
+				
+				/*
+					Checking if there is an update "after next payment" for this user.
+				*/
+				$user_updates = $user->pmpro_stripe_updates;
+				if(!empty($user_updates))
+				{
+					foreach($user_updates as $key => $update)
+					{
+						if($update['when'] == 'payment')
+						{							
+							//get current plan at Stripe to get payment date
+							$last_order = new MemberOrder();
+							$last_order->getLastMemberOrder($user_id);
+							$last_order->setGateway('stripe');
+							$last_order->Gateway->getCustomer();
+																	
+							if(!empty($last_order->Gateway->customer))
+							{
+								//find the first subscription
+								if(!empty($last_order->Gateway->customer->subscriptions['data'][0]))
+								{
+									$first_sub = $last_order->Gateway->customer->subscriptions['data'][0]->__toArray();
+									$end_timestamp = $first_sub['current_period_end'];
+								}
+							}
+							
+							//if we didn't get an end date, let's set one one cycle out
+							$end_timestamp = strtotime("+" . $update['cycle_number'] . " " . $update['cycle_period']);
+												
+							//build order object
+							$update_order = new MemberOrder();
+							$update_order->setGateway('stripe');
+							$update_order->user_id = $user->ID;
+							$update_order->membership_id = $user->membership_level->id;
+							$update_order->membership_name = $user->membership_level->name;
+							$update_order->InitialPayment = 0;
+							$update_order->PaymentAmount = $update['billing_amount'];
+							$update_order->ProfileStartDate = date("Y-m-d", $end_timestamp);
+							$update_order->BillingPeriod = $update['cycle_period'];
+							$update_order->BillingFrequency = $update['cycle_number'];
+							
+							//update subscription
+							$update_order->Gateway->subscribe($update_order);
+													
+							//update membership
+							$sqlQuery = "UPDATE $wpdb->pmpro_memberships_users 
+											SET billing_amount = '" . esc_sql($update['billing_amount']) . "', 
+												cycle_number = '" . esc_sql($update['cycle_number']) . "', 
+												cycle_period = '" . esc_sql($update['cycle_period']) . "' 
+											WHERE user_id = '" . esc_sql($user_id) . "' 
+												AND membership_id = '" . esc_sql($last_order->membership_id) . "' 
+												AND status = 'active' 
+											LIMIT 1";
+															
+							$wpdb->query($sqlQuery);
+							
+							//remove this update
+							unset($user_updates[$key]);
+						
+							//only process the first next payment update
+							break;
+						}
+					}
+					
+					//save updates in case we removed some
+					update_user_meta($user_id, "pmpro_stripe_updates", $user_updates);
+				}
+				
 				pmpro_stripeWebhookExit();
 			}
 			else
@@ -211,7 +287,10 @@
 	}
 	else
 	{
-		$logstr .= "Could not find an event with ID #" . $event_id;
+		if(!empty($event_id))
+			$logstr .= "Could not find an event with ID #" . $event_id;
+		else
+			$logstr .= "No event ID given.";
 		pmpro_stripeWebhookExit();
 	}
 

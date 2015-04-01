@@ -35,56 +35,34 @@ function pmpro_membership_level_profile_fields($user)
 		<tr>
 			<th><label for="membership_level"><?php _e("Current Level", "pmpro"); ?></label></th>
 			<td>
-				<select name="membership_level" onchange="pmpro_mchange_warning();">
+				<select name="membership_level">
 					<option value="" <?php if(empty($user->membership_level->ID)) { ?>selected="selected"<?php } ?>>-- <?php _e("None", "pmpro");?> --</option>
 				<?php
 					foreach($levels as $level)
 					{
-						$current_level = ($user->membership_level->ID == $level->id);
 				?>
-					<option value="<?php echo $level->id?>" <?php if($current_level) { ?>selected="selected"<?php } ?>><?php echo $level->name?></option>
+					<option value="<?php echo $level->id?>" <?php selected($level->id, (isset($user->membership_level->ID) ? $user->membership_level->ID : 0 )); ?>><?php echo $level->name?></option>
 				<?php
 					}
 				?>
 				</select>
-				<script>
-					var pmpro_mchange_once = 0;
-					function pmpro_mchange_warning()
-					{
-						if(pmpro_mchange_once == 0)
-						{
-							alert('Warning: The existing membership will be cancelled, and the new membership will be free.');
-							pmpro_mchange_once = 1;
-						}
-					}
-				</script>
-				<?php
-					$membership_values = $wpdb->get_row("SELECT * FROM $wpdb->pmpro_memberships_users WHERE status = 'active' AND user_id = '" . $user->ID . "' LIMIT 1");
-					if(!empty($membership_values->billing_amount) || !empty($membership_values->trial_amount))
-					{
-					?>
-						<?php if($membership_values->billing_amount > 0) { ?>
-							at <?php echo pmpro_formatPrice($membership_values->billing_amount);?>
-							<?php if($membership_values->cycle_number > 1) { ?>
-								per <?php echo $membership_values->cycle_number?> <?php echo sornot($membership_values->cycle_period,$membership_values->cycle_number)?>
-							<?php } elseif($membership_values->cycle_number == 1) { ?>
-								per <?php echo $membership_values->cycle_period?>
-							<?php } ?>
-						<?php } ?>
-
-						<?php if($membership_values->billing_limit) { ?> for <?php echo $membership_values->billing_limit.' '.sornot($membership_values->cycle_period,$membership_values->billing_limit)?><?php } ?>.
-
-						<?php if($membership_values->trial_limit) { ?>
-							The first <?php echo $membership_values->trial_limit?> <?php echo sornot("payments",$membership_values->trial_limit)?> will cost <?php echo pmpro_formatPrice($membership_values->trial_amount);?>.
-						<?php } ?>
-					<?php
-					}
-					else
-					{
-						_e("User is not paying.", "pmpro");
-					}
-				?>
-			</td>
+                <span id="current_level_cost">
+                <?php
+                $membership_values = pmpro_getMembershipLevelForUser($user->ID);
+                if(empty($membership_values) || pmpro_isLevelFree($membership_values))
+                {
+                    echo "Not paying.";
+                }
+                else
+                {
+                    //we tweak the initial payment here so the text here effectively shows the recurring amount
+                    $membership_values->initial_payment = $membership_values->billing_amount;
+                    echo pmpro_getLevelCost($membership_values, true, true);
+                }
+                ?>
+                </span>
+                <p id="cancel_description" class="description hidden"><?php _e("This will not change the subscription at the gateway unless the 'Cancel' checkbox is selected below.", "pmpro"); ?></p>
+            </td>
 		</tr>
 		<?php
 		}
@@ -148,11 +126,78 @@ function pmpro_membership_level_profile_fields($user)
 				</script>
 			</td>
 		</tr>
+        <tr class="more_level_options">
+            <th></th>
+            <td>
+                <label for="send_admin_change_email"><input value="1" id="send_admin_change_email" name="send_admin_change_email" type="checkbox"> Send the user an email about this change.</label>
+            </td>
+        </tr>
+        <tr class="more_level_options">
+            <th></th>
+            <td>
+                <label for="cancel_subscription"><input value="1" id="cancel_subscription" name="cancel_subscription" type="checkbox"> Cancel this user's subscription at the gateway.</label>
+            </td>
+        </tr>
 		<?php
 		}
 		?>
 </table>
+    <script>
+        jQuery(document).ready(function() {
+            var $membership_level_select = jQuery("[name=membership_level]");
+            var old_level = $membership_level_select.val();
+            var current_level_cost = jQuery("#current_level_cost").text();
+
+            jQuery(".more_level_options").hide();
+
+            $membership_level_select.change(function() {
+                if(jQuery(this).val() == 0) {
+                    jQuery("#cancel_subscription").attr('checked', true);
+                    jQuery("#current_level_cost").text("Not paying.");
+                }
+                else {
+                    jQuery("#cancel_subscription").attr('checked', false);
+                    jQuery("#current_level_cost").text(current_level_cost);
+                }
+
+                if(jQuery(this).val() != old_level)
+                {
+                    jQuery(".more_level_options").show();
+                    jQuery("#cancel_description").show();
+                }
+                else
+                {
+                    jQuery(".more_level_options").hide();
+                    jQuery("#cancel_description").hide();
+
+                }
+            });
+
+            jQuery("#cancel_subscription").change(function() {
+                if(jQuery(this).attr('checked') == 'checked')
+                {
+                    jQuery("#cancel_description").hide();
+                    jQuery("#current_level_cost").text("Not paying.");
+                }
+                else
+                {
+                    jQuery("#current_level_cost").text(current_level_cost);
+                    jQuery("#cancel_description").show();
+                }
+            });
+        });
+    </script>
 <?php
+	do_action("pmpro_after_membership_level_profile_fields", $user);	
+}
+
+/*
+	When applied, previous subscriptions won't be cancelled when changing membership levels.
+	Use a function here instead of __return_false so we can easily turn add and remove it.
+*/
+function pmpro_cancel_previous_subscriptions_false()
+{
+	return false;
 }
 
 //save the fields on update
@@ -168,16 +213,34 @@ function pmpro_membership_level_profile_fields_update()
 	$membership_level_capability = apply_filters("pmpro_edit_member_capability", "manage_options");
 	if(!current_user_can($membership_level_capability))
 		return false;
-		
+
 	//level change
-	if(isset($_REQUEST['membership_level']))
-	{
-		if(pmpro_changeMembershipLevel($_REQUEST['membership_level'], $user_ID))
-		{
-			//it changed. send email
-			$level_changed = true;
-		}		
-	}
+    if(isset($_REQUEST['membership_level']))
+    {
+        //if the level is being set to 0 by the admin, it's a cancellation.
+        $changed_or_cancelled = '';
+        if($_REQUEST['membership_level'] === 0 ||$_REQUEST['membership_level'] === '0' || $_REQUEST['membership_level'] =='')
+        {
+            $changed_or_cancelled = 'admin_cancelled';
+        }
+        else
+            $changed_or_cancelled = 'admin_changed';
+
+		//if the cancel at gateway box is not checked, don't cancel 
+		if(empty($_REQUEST['cancel_subscription']))
+			add_filter('pmpro_cancel_previous_subscriptions', 'pmpro_cancel_previous_subscriptions_false');
+				
+		//do the change
+        if(pmpro_changeMembershipLevel($_REQUEST['membership_level'], $user_ID, $changed_or_cancelled))
+        {
+            //it changed. send email
+            $level_changed = true;
+        }
+		
+		//remove filter after ward		
+		if(empty($_REQUEST['cancel_subscription']))
+			remove_filter('pmpro_cancel_previous_subscriptions', 'pmpro_cancel_previous_subscriptions_false');
+    }
 	
 	//expiration change
 	if(!empty($_REQUEST['expires']))
@@ -204,7 +267,7 @@ function pmpro_membership_level_profile_fields_update()
 	}
 	
 	//send email
-	if(!empty($level_changed) || !empty($expiration_changed))
+    if(!empty($_REQUEST['send_admin_change_email']))
 	{
 		//email to member
 		$pmproemail = new PMProEmail();

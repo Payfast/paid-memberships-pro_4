@@ -3,7 +3,7 @@
 Plugin Name: Paid Memberships Pro
 Plugin URI: http://www.paidmembershipspro.com
 Description: Plugin to Handle Memberships
-Version: 1.7.15.2
+Version: 1.8
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 */
@@ -13,7 +13,7 @@ Author URI: http://www.strangerstudios.com
 */
 
 //version constant
-define("PMPRO_VERSION", "1.7.15.2");
+define("PMPRO_VERSION", "1.8");
 
 //if the session has been started yet, start it (ignore if running from command line)
 if(defined('STDIN') )
@@ -44,7 +44,6 @@ require_once(PMPRO_DIR . "/includes/upgradecheck.php");			//database and other u
 
 require_once(PMPRO_DIR . "/scheduled/crons.php");				//crons for expiring members, sending expiration emails, etc
 
-//require_once(PMPRO_DIR . "/classes/class.pmprogateway.php");	//loaded by memberorder class when needed
 require_once(PMPRO_DIR . "/classes/class.memberorder.php");		//class to process and save orders
 require_once(PMPRO_DIR . "/classes/class.pmproemail.php");		//setup and filter emails sent by PMPro
 
@@ -68,6 +67,21 @@ require_once(PMPRO_DIR . "/includes/xmlrpc.php");				//xmlrpc methods
 require_once(PMPRO_DIR . "/shortcodes/checkout_button.php");	//[checkout_button] shortcode to show link to checkout for a level
 require_once(PMPRO_DIR . "/shortcodes/membership.php");			//[membership] shortcode to hide/show member content
 
+//load gateway
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway.php");	//loaded by memberorder class when needed
+
+//load payment gateway class
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_authorizenet.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_braintree.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_check.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_cybersource.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_payflowpro.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_paypal.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_paypalexpress.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_paypalstandard.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_stripe.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_twocheckout.php");
+
 /*
 	Setup the DB and check for upgrades
 */
@@ -86,12 +100,34 @@ define("SITEURL", $urlparts[1]);
 define("SECUREURL", str_replace("http://", "https://", get_bloginfo("wpurl")));
 define("PMPRO_URL", WP_PLUGIN_URL . "/paid-memberships-pro");
 define("PMPRO_DOMAIN", pmpro_getDomainFromURL(site_url()));
+define("PAYPAL_BN_CODE", "PaidMembershipsPro_SP");
 
 /*
 	Globals
 */
 global $gateway_environment;
 $gateway_environment = pmpro_getOption("gateway_environment");
+
+
+// Returns a list of all available gateway
+function pmpro_gateways(){
+	$pmpro_gateways = array(
+		'' 					=> __('Testing Only', 'pmpro'),
+		'check' 			=> __('Pay by Check', 'pmpro'),
+		'stripe' 			=> __('Stripe', 'pmpro'),
+		'paypalexpress' 	=> __('PayPal Express', 'pmpro'),
+		'paypal' 			=> __('PayPal Website Payments Pro', 'pmpro'),
+		'payflowpro' 		=> __('PayPal Payflow Pro/PayPal Pro', 'pmpro'),
+		'paypalstandard' 	=> __('PayPal Standard', 'pmpro'),
+		'authorizenet' 		=> __('Authorize.net', 'pmpro'),
+		'braintree' 		=> __('Braintree Payments', 'pmpro'),
+		'twocheckout' 		=> __('2Checkout', 'pmpro'),
+		'cybersource' 		=> __('Cybersource', 'pmpro')
+	);
+
+	return apply_filters( 'pmpro_gateways', $pmpro_gateways );
+}
+
 
 //when checking levels for users, we save the info here for caching. each key is a user id for level object for that user.
 global $all_membership_levels;
@@ -114,19 +150,21 @@ function pmpro_activation()
 	//add caps to admin role
 	$role = get_role( 'administrator' );
 	$role->add_cap( 'pmpro_memberships_menu' );
-	$role->add_cap( 'pmpro_membershiplevels' );	
+	$role->add_cap( 'pmpro_membershiplevels' );
 	$role->add_cap( 'pmpro_edit_memberships' );
-	$role->add_cap( 'pmpro_pagesettings' );	
+	$role->add_cap( 'pmpro_pagesettings' );
 	$role->add_cap( 'pmpro_paymentsettings' );
 	$role->add_cap( 'pmpro_emailsettings' );
-	$role->add_cap( 'pmpro_advancedsettings' );	
-	$role->add_cap( 'pmpro_addons' );	
+	$role->add_cap( 'pmpro_advancedsettings' );
+	$role->add_cap( 'pmpro_addons' );
 	$role->add_cap( 'pmpro_memberslist' );
 	$role->add_cap( 'pmpro_membersliscsv' );
 	$role->add_cap( 'pmpro_reports' );
 	$role->add_cap( 'pmpro_orders' );
 	$role->add_cap( 'pmpro_orderscsv' );
-	$role->add_cap( 'pmpro_discountcodes' );	
+	$role->add_cap( 'pmpro_discountcodes' );
+
+	do_action('pmpro_activation');
 }
 function pmpro_deactivation()
 {
@@ -134,14 +172,14 @@ function pmpro_deactivation()
 	wp_clear_scheduled_hook('pmpro_cron_expiration_warnings');
 	wp_clear_scheduled_hook('pmpro_cron_trial_ending_warnings');
 	wp_clear_scheduled_hook('pmpro_cron_expire_memberships');
-	wp_clear_scheduled_hook('pmpro_cron_credit_card_expiring_warnings');   
+	wp_clear_scheduled_hook('pmpro_cron_credit_card_expiring_warnings');
 
 	//remove caps from admin role
 	$role = get_role( 'administrator' );
 	$role->remove_cap( 'pmpro_memberships_menu' );
-	$role->remove_cap( 'pmpro_membershiplevels' );	
+	$role->remove_cap( 'pmpro_membershiplevels' );
 	$role->remove_cap( 'pmpro_edit_memberships' );
-	$role->remove_cap( 'pmpro_pagesettings' );	
+	$role->remove_cap( 'pmpro_pagesettings' );
 	$role->remove_cap( 'pmpro_paymentsettings' );
 	$role->remove_cap( 'pmpro_emailsettings' );
 	$role->remove_cap( 'pmpro_advancedsettings' );
@@ -152,6 +190,8 @@ function pmpro_deactivation()
 	$role->remove_cap( 'pmpro_orders' );
 	$role->remove_cap( 'pmpro_orderscsv' );
 	$role->remove_cap( 'pmpro_discountcodes' );
+
+	do_action('pmpro_deactivation');
 }
 register_activation_hook(__FILE__, 'pmpro_activation');
 register_deactivation_hook(__FILE__, 'pmpro_deactivation');
