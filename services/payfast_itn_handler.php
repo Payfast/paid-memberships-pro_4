@@ -100,7 +100,7 @@
     $pfErrMsg = '';
     $pfDone = false;
     $pfData = array();
-    $pfHost = ( ( $gateway_environment == 'sandbox' ) ? 'sandbox' : 'www' ) . '.payfast.local';
+    $pfHost = ( ( $gateway_environment == 'sandbox' ) ? 'sandbox' : 'www' ) . '.payfast.co.za';
     $pfOrderId = '';
     $pfParamString = '';
 

@@ -258,7 +258,7 @@
             {
                 $merchant_id = self::SANDBOX_MERCHANT_ID;
                 $merchant_key = self::SANDBOX_MERCHANT_KEY;
-                $payfast_url ="https://sandbox.payfast.local/eng/process";
+                $payfast_url ="https://sandbox.payfast.co.za/eng/process";
             }
             else
             {
