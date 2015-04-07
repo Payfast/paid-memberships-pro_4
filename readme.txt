@@ -7,7 +7,7 @@ Contributors: strangerstudios
 Tags: memberships, membership, authorize.net, ecommerce, paypal, stripe, braintree, restrict access, restrict content, directory site, payflow
 Requires at least: 3.5
 Tested up to: 4.1.1
-Stable tag: 1.8.1
+Stable tag: 1.8.2
 
 The easiest way to GET PAID with your WordPress site. Flexible content control by Membership Level, Reports, Affiliates and Discounts
 
@@ -106,6 +106,13 @@ Not sure? You can find out by doing a bit a research.
 4. Offer Membership Discounts with specific price rules (restricted by level, unique pricing for each level, # of uses, expiration date.)
 
 == Changelog == 
+= 1.8.2 =
+* BUG: Fixed issue where calls to pmpro_hasMembershipLevel() using level names wasn't working. (Thanks, Scott Slone)
+* BUG: Fixed issue with memberslistcsv capabilities. (Thanks, Arnaud Devic)
+* BUG: Fixed fatal error that could come up sometimes when PMPro could not find a subscription for a user in Stripe. (Thanks, Chris Eller)
+* ENHANCEMENT: Triming whitespace off of search text on members list and orders list searches.
+* ENHANCEMENT: Security hardening of SQL queries for members list, orders list, and some helper functions.
+
 = 1.8.1 =
 * BUG: Fixed typos in pmpro_memberslist_csv and pmpro_orderscsv capabilities. (Thanks, Arnaud Devic)
 * BUG: Only loading the Braintree API when using it now.
