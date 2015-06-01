@@ -3,7 +3,7 @@
 Plugin Name: Paid Memberships Pro
 Plugin URI: http://www.paidmembershipspro.com
 Description: Plugin to Handle Memberships
-Version: 1.8
+Version: 1.8.3
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 */
@@ -13,7 +13,7 @@ Author URI: http://www.strangerstudios.com
 */
 
 //version constant
-define("PMPRO_VERSION", "1.8");
+define("PMPRO_VERSION", "1.8.3");
 
 //if the session has been started yet, start it (ignore if running from command line)
 if(defined('STDIN') )
@@ -66,6 +66,7 @@ require_once(PMPRO_DIR . "/includes/xmlrpc.php");				//xmlrpc methods
 
 require_once(PMPRO_DIR . "/shortcodes/checkout_button.php");	//[checkout_button] shortcode to show link to checkout for a level
 require_once(PMPRO_DIR . "/shortcodes/membership.php");			//[membership] shortcode to hide/show member content
+require_once(PMPRO_DIR . "/shortcodes/pmpro_account.php");			//[pmpro_account] shortcode to show account information
 
 //load gateway
 require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway.php");	//loaded by memberorder class when needed
@@ -158,7 +159,7 @@ function pmpro_activation()
 	$role->add_cap( 'pmpro_advancedsettings' );
 	$role->add_cap( 'pmpro_addons' );
 	$role->add_cap( 'pmpro_memberslist' );
-	$role->add_cap( 'pmpro_membersliscsv' );
+	$role->add_cap( 'pmpro_memberslistcsv' );
 	$role->add_cap( 'pmpro_reports' );
 	$role->add_cap( 'pmpro_orders' );
 	$role->add_cap( 'pmpro_orderscsv' );
@@ -185,7 +186,7 @@ function pmpro_deactivation()
 	$role->remove_cap( 'pmpro_advancedsettings' );
 	$role->remove_cap( 'pmpro_addons' );
 	$role->remove_cap( 'pmpro_memberslist' );
-	$role->remove_cap( 'pmpro_membersliscsv' );
+	$role->remove_cap( 'pmpro_memberslistcsv' );
 	$role->remove_cap( 'pmpro_reports' );
 	$role->remove_cap( 'pmpro_orders' );
 	$role->remove_cap( 'pmpro_orderscsv' );

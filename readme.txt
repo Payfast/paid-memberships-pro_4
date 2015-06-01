@@ -6,8 +6,8 @@ for support, bug reports and queries, please contact support@payfast.co.za
 Contributors: strangerstudios
 Tags: memberships, membership, authorize.net, ecommerce, paypal, stripe, braintree, restrict access, restrict content, directory site, payflow
 Requires at least: 3.5
-Tested up to: 4.1.1
-Stable tag: 1.8
+Tested up to: 4.2.1
+Stable tag: 1.8.3
 
 The easiest way to GET PAID with your WordPress site. Flexible content control by Membership Level, Reports, Affiliates and Discounts
 
@@ -106,6 +106,44 @@ Not sure? You can find out by doing a bit a research.
 4. Offer Membership Discounts with specific price rules (restricted by level, unique pricing for each level, # of uses, expiration date.)
 
 == Changelog == 
+= 1.8.3 =
+* SECURITY PATCH: The pmpro_getOption function has been updated to not set values from $_REQUEST when available. This allowed malicious users to override PMPro settings on single page loads allowing them to inject text into pages and do other "bad things". (Thanks, Charles Hill)
+* SECURITY PATCH: Many calls to pmpro_getOption("gateway") were changed to use pmpro_getGateway which specifically allowed for overriding that one value via a request parameter (the validity of the gateway is double checked).
+* BUG: No longer showing the number of visits/views/logins "this month" when the user hasn't visited in over a month. (Thanks, Kenneth)
+* BUG: Fix for email from names with apostrophes and quotes in them.
+* BUG: Using current_time() and escaping form values better in logins report.
+* BUG: Fixed issue in pmpro_generateUsername() when checking for duplicates. (Thanks, Ruslan)
+* BUG: Fixed issue where $user var wasn't set for emails sent out in the Braintree webhook script. (Thanks, Charles Hill)
+* ENHANCEMENT: Added pmpro_account_bullets_top and pmpro_account_bullets_bottom hooks to add content to the accounts page.
+* ENHANCEMENT: Added pmpro_get_recurring_payments_profile_details_nvpstr, pmpro_manage_recurring_payments_profile_status_nvpstr, pmpro_create_recurring_payments_profile_nvpstr, pmpro_do_express_checkout_payment_nvpstr, and pmpro_get_express_checkout_details_nvpstr hooks to filter specific nvp strings in the PayPal Express integration.
+* ENHANCEMENT: Added labels to checkboxes in the dashboard settings pages.
+* ENHANCEMENT: Can now use the [pmpro_account] shortcode on other pages/widgets/etc. Can also limit to specific sections [pmpro_account sections='memberships,profile,invoices,links'] just remove sections from that list.
+* ENHANCEMENT: Changed all uses of the global $table_prefix to use $wpdb->base_prefix to aid in compatibility when loading WordPress with other PHP code (e.g. phpBB). (Thanks, Dion)
+* ENHANCEMENT: The notification script was updated to point to notifications.paidmembershipspro.com instead of www.paidmembershipspro.com/notifications/. This allows us to keep our notification script on a different server. This script is used to insert notifications into the PMPro admin pages when important updates are available.
+
+= 1.8.2.2 =
+* BUG: Fixed conflicts when other plugins with older Recaptcha libraries are also activated. Prefixed our copy of the Recaptcha library and functions with pmpro_ and added code to handle cases where an older version of recaptch is used at checkout.
+* BUG: Fixed warnings in pmpro_formatPrice. (Thanks, Andrea Carraro)
+
+= 1.8.2.1 =
+* BUG: Fixed issue where admins would get emails RE membership changes whenever a profile was updated even if the membership wasn't changed. (Thanks, chrisw123)
+
+= 1.8.2 =
+* BUG: Fixed issue where calls to pmpro_hasMembershipLevel() using level names wasn't working. (Thanks, Scott Slone)
+* BUG: Fixed issue with memberslistcsv capabilities. (Thanks, Arnaud Devic)
+* BUG: Fixed fatal error that could come up sometimes when PMPro could not find a subscription for a user in Stripe. (Thanks, Chris Eller)
+* ENHANCEMENT: Triming whitespace off of search text on members list and orders list searches.
+* ENHANCEMENT: Security hardening of SQL queries for members list, orders list, and some helper functions.
+
+= 1.8.1 =
+* BUG: Fixed typos in pmpro_memberslist_csv and pmpro_orderscsv capabilities. (Thanks, Arnaud Devic)
+* BUG: Only loading the Braintree API when using it now.
+* BUG: Fixed fatal error that would occur at checkout if PayPal Standard were used with a discount code. (Thanks, John Zeiger)
+* BUG: Fixed issue where discount codes would not work if billing address fields were hidden. (e.g. paying by PayPal or check)
+* BUG: Fixed issue with the logic around sending emails when admin's change a member's level or expiration date. Admins will always get an email. Members will only get an email if the checkbox is checked.
+* ENHANCEMENT: No longer showing check instructions at checkout if the level is free.
+* ENHANCEMENT: Added pmpro_stripe_create_subscription filter. (Thanks, nickd32 on GitHub)
+* ENHANCEMENT: Added Czech (cs_CZ) language files and support for using decimals as separators. (Thanks, Martin "shr3k" Kokeš on GitHub)
 
 = 1.8 =
 * ENHANCEMENT: Payment gateway classes updated so all settings and checkout fields are processed via the gateway class file. This will make it easier to maintain, update, and add new gateways.

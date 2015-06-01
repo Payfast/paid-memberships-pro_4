@@ -241,7 +241,7 @@
 					global $recaptcha, $recaptcha_publickey;										
 					if($recaptcha == 2 || ($recaptcha == 1 && pmpro_isLevelFree($pmpro_level))) 
 					{											
-						echo recaptcha_get_html($recaptcha_publickey, NULL, true);						
+						echo pmpro_recaptcha_get_html($recaptcha_publickey, NULL, true);						
 					}								
 				?>								
 				</div>
@@ -269,7 +269,7 @@
 		do_action('pmpro_checkout_boxes');
 	?>		
 		
-	<?php if(pmpro_getOption("gateway", true) == "paypal" && empty($pmpro_review)) { ?>
+	<?php if(pmpro_getGateway() == "paypal" && empty($pmpro_review)) { ?>
 		<table id="pmpro_payment_method" class="pmpro_checkout top1em" width="100%" cellpadding="0" cellspacing="0" border="0" <?php if(!$pmpro_requirebilling) { ?>style="display: none;"<?php } ?>>
 		<thead>
 			<tr>
@@ -646,7 +646,7 @@
 	</script>
 	
 	<?php
-		if($gateway == "check")
+		if($gateway == "check" && !pmpro_isLevelFree($pmpro_level))
 		{
 			$instructions = pmpro_getOption("instructions");			
 			echo '<div class="pmpro_check_instructions">' . wpautop($instructions) . '</div>';

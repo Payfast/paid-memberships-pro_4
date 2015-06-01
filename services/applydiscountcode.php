@@ -73,6 +73,17 @@
 		jQuery('#<?php echo $msgfield?>').removeClass('pmpro_error');
 		jQuery('#<?php echo $msgfield?>').addClass('pmpro_success');
 		jQuery('#<?php echo $msgfield?>').addClass('pmpro_discount_code_msg');
+
+		if (jQuery("#discount_code").length) {
+			jQuery('#discount_code').val('<?php echo $discount_code?>');
+		} else {
+			jQuery('<input>').attr({
+				type: 'hidden',
+				id: 'discount_code',
+				name: 'discount_code',
+				value: '<?php echo $discount_code?>'
+			}).appendTo('#pmpro_form');
+		}
 		
 		jQuery('#other_discount_code_tr').hide();
 		jQuery('#other_discount_code_p').html('<a id="other_discount_code_a" href="javascript:void(0);"><?php _e('Click here to change your discount code', 'pmpro');?></a>.');
@@ -101,7 +112,7 @@
 			}
 			
 			//hide/show billing
-			if(pmpro_isLevelFree($code_level) || pmpro_getOption("gateway") == "paypalexpress" || pmpro_getOption("gateway") == "paypalstandard" || pmpro_getOption('gateway') == 'check')
+			if(pmpro_isLevelFree($code_level) || pmpro_getGateway() == "paypalexpress" || pmpro_getGateway() == "paypalstandard" || pmpro_getGateway() == 'check')
 			{				
 				?>
 				jQuery('#pmpro_billing_address_fields').hide();
@@ -117,7 +128,7 @@
 			}
 			
 			//hide/show paypal button
-			if(pmpro_getOption("gateway") == "paypalexpress" || pmpro_getOption("gateway") == "paypalstandard")			
+			if(pmpro_getGateway() == "paypalexpress" || pmpro_getGateway() == "paypalstandard")			
 			{
 				if(pmpro_isLevelFree($code_level))
 				{
