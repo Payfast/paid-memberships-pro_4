@@ -155,7 +155,7 @@
 					Currency and Tax Settings
 				</td>
 			</tr>
-			<tr class="gateway gateway_ <?php echo esc_attr(pmpro_getClassesForPaymentSettingsField("currency"));?>" <?php if(!empty($gateway) && $gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "braintree" && $gateway != "twocheckout" && $gateway != "cybersource" && $gateway != "payflowpro" && $gateway != "stripe" && $gateway != "authorizenet") { ?>style="display: none;"<?php } ?>>
+			<tr class="gateway gateway_ <?php echo esc_attr(pmpro_getClassesForPaymentSettingsField("currency"));?>" <?php if(!empty($gateway) && $gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "braintree" && $gateway != "twocheckout" && $gateway != "cybersource" && $gateway != "payflowpro" && $gateway != "stripe" && $gateway != "authorizenet" && $gateway != "gourl") { ?>style="display: none;"<?php } ?>>
 				<th scope="row" valign="top">
 			<tr class="gateway gateway_ gateway_paypal gateway_paypalexpress gateway_paypalstandard gateway_braintree gateway_twocheckout gateway_cybersource gateway_stripe gateway_authorizenet gateway_payflowpro gateway_check gateway_payfast" <?php if(!empty($gateway) && $gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "braintree" && $gateway != "twocheckout" && $gateway != "cybersource" && $gateway != "payflowpro" && $gateway != "stripe" && $gateway != "authorizenet" && $gateway != 'payfast') { ?>style="display: none;"<?php } ?>>
 				<th scope="row" valign="top">
