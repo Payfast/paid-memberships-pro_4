@@ -15,9 +15,6 @@
 
 	//get/set settings
 	if(!empty($_REQUEST['savesettings']))
-        pmpro_setOption("payfast_debug");
-        pmpro_setOption("payfast_merchant_id");
-        pmpro_setOption("payfast_merchant_key");
 	{
 		/*
 			Save any value that might have been passed in
@@ -51,9 +48,7 @@
 		$msg = true;
 		$msgt = __("Your payment settings have been updated.", "pmpro");
 	}
-    $payfast_debug = pmpro_getOption("payfast_debug");
-    $payfast_merchant_id = pmpro_getOption("payfast_merchant_id");
-    $payfast_merchant_key = pmpro_getOption("payfast_merchant_key");
+
 
 	/*
 		Extract values for use later
@@ -113,8 +108,7 @@
 				</th>
 				<td>
 					<select id="gateway" name="gateway" onchange="pmpro_changeGateway(jQuery(this).val());">
-                        <option value="payfast" <?php selected( $gateway, "payfast" ); ?>>PayFast</option>
-						<?php
+                        <?php
 							$pmpro_gateways = pmpro_gateways();
 							foreach($pmpro_gateways as $pmpro_gateway_name => $pmpro_gateway_label)
 							{
@@ -148,7 +142,7 @@
 			</tr>
 
 			<?php /* Gateway Specific Settings */ ?>
-			<?php do_action('pmpro_payment_option_fields', $payment_option_values, $gateway); ?>
+			<?php do_action('pmpro_payment_option_fields', $payment_option_values, $gateway ); ?>
 
 			<tr class="pmpro_settings_divider">
 				<td colspan="2">
@@ -157,35 +151,7 @@
 			</tr>
 			<tr class="gateway gateway_ <?php echo esc_attr(pmpro_getClassesForPaymentSettingsField("currency"));?>" <?php if(!empty($gateway) && $gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "braintree" && $gateway != "twocheckout" && $gateway != "cybersource" && $gateway != "payflowpro" && $gateway != "stripe" && $gateway != "authorizenet" && $gateway != "gourl") { ?>style="display: none;"<?php } ?>>
 				<th scope="row" valign="top">
-			<tr class="gateway gateway_ gateway_paypal gateway_paypalexpress gateway_paypalstandard gateway_braintree gateway_twocheckout gateway_cybersource gateway_stripe gateway_authorizenet gateway_payflowpro gateway_check gateway_payfast" <?php if(!empty($gateway) && $gateway != "paypal" && $gateway != "paypalexpress" && $gateway != "paypalstandard" && $gateway != "braintree" && $gateway != "twocheckout" && $gateway != "cybersource" && $gateway != "payflowpro" && $gateway != "stripe" && $gateway != "authorizenet" && $gateway != 'payfast') { ?>style="display: none;"<?php } ?>>
-				<th scope="row" valign="top">
-			<tr class="gateway gateway_payfast" <?php if( $gateway != "payfast" ) { ?>style="display: none;"<?php } ?>> 
-                <th scope="row" valign="top">
-                    <label for="payfast_merchant_id"><?php _e('PayFast Merchant ID', 'pmpro');?>:</label>
-                </th>
-                <td>
-                    <input id="payfast_merchant_id" name="payfast_merchant_id" value="<?php echo esc_attr($payfast_merchant_id); ?>" />
-                </td>
-            </tr>
-            <tr class="gateway gateway_payfast" <?php if( $gateway != "payfast" ) { ?>style="display: none;"<?php } ?>> 
-                <th scope="row" valign="top">
-                    <label for="payfast_merchant_key"><?php _e('PayFast Merchant Key', 'pmpro');?>:</label>
-                </th>
-                <td>
-                    <input id="payfast_merchant_key" name="payfast_merchant_key" value="<?php echo esc_attr($payfast_merchant_key); ?>" />
-                </td>
-            </tr>           
-            <tr class="gateway gateway_payfast" <?php if( $gateway != "payfast" ) { ?>style="display: none;"<?php } ?>> 
-                <th scope="row" valign="top">
-                    <label for="payfast_debug"><?php _e('PayFast Debug Mode', 'pmpro');?>:</label>
-                </th>
-                <td>
-                    <select name="payfast_debug">
-                        <option value="1" <?php if( isset($payfast_debug) && $payfast_debug ) { ?>selected="selected"<?php } ?>><?php _e('On', 'pmpro');?></option>
-                        <option value="0" <?php if( isset($payfast_debug) && !$payfast_debug) { ?>selected="selected"<?php } ?>><?php _e('Off', 'pmpro');?></option>
-                    </select>
-                </td>
-            </tr>					<label for="currency"><?php _e('Currency', 'pmpro');?>:</label>
+					<label for="currency"><?php _e('Currency', 'pmpro');?>:</label>
 				</th>
 				<td>
 					<select name="currency">

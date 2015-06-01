@@ -1,33 +1,33 @@
-<?php   
+<?php
 /**
  * payfast_itn_handler.php
  *
- * 
+ *
  * Copyright (c) 2009-2014 PayFast (Pty) Ltd
- * 
+ *
  * LICENSE:
- * 
+ *
  * This payment module is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * This payment module is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * @author     Ron Darby - PayFast
  * @copyright  2009-2014 PayFast (Pty) Ltd
  * @license    http://www.opensource.org/licenses/lgpl-license.php LGPL
  */
-      
-    //in case the file is loaded directly   
+
+    //in case the file is loaded directly
     if(!defined("WP_USE_THEMES"))
     {
         global $isapage;
         $isapage = true;
-        
+
         define('WP_USE_THEMES', false);
         require_once(dirname(__FILE__) . '/../../../../wp-load.php');
     }
@@ -35,7 +35,7 @@
     define( 'PF_SOFTWARE_NAME', 'Paid Membership Pro' );
     define( 'PF_SOFTWARE_VER',  '');
     define( 'PF_MODULE_NAME', 'PayFast-PaidMembershipPro' );
-    define( 'PF_MODULE_VER', '1.0.0' );
+    define( 'PF_MODULE_VER', '1.1.0' );
 
     define( 'PF_DEBUG', pmpro_getOption("payfast_debug") );
 
@@ -86,15 +86,15 @@
         'The payment is pending. Please note, you will receive another Instant'.
         ' Transaction Notification when the payment status changes to'.
         ' "Completed", or "Failed"' );
-    
+
     //uncomment to log requests in logs/ipn.txt
     //define('PMPRO_IPN_DEBUG', true);
-    
+
     //some globals
     global $wpdb, $gateway_environment, $logstr;
     $logstr = "";   //will put debug info here and write to ipnlog.txt
-    
-    
+
+
     // Variable Initialization
     $pfError = false;
     $pfErrMsg = '';
@@ -104,10 +104,10 @@
     $pfOrderId = '';
     $pfParamString = '';
 
-    
+
 
     ipnlog(  'PayFast ITN call received' );
-    
+
     //// Notify PayFast that information has been received
     if( !$pfError && !$pfDone )
     {
@@ -119,15 +119,15 @@
     if( !$pfError && !$pfDone )
     {
         ipnlog(  'Get posted data' );
-    
+
         // Posted variables from ITN
         $pfData = pmpro_pfGetData();
 
         $morder = new MemberOrder( $pfData['m_payment_id'] );
         $morder->getMembershipLevel();
-        $morder->getUser(); 
+        $morder->getUser();
         ipnlog(  'PayFast Data: '. print_r( $pfData, true ) );
-    
+
         if( $pfData === false )
         {
             $pfError = true;
@@ -139,7 +139,7 @@
     if( !$pfError && !$pfDone )
     {
         ipnlog(  'Verify security signature' );
-    
+
         // If signature different, log for debugging
         if( !pmpro_pfValidSignature( $pfData, $pfParamString ) )
         {
@@ -152,39 +152,39 @@
     if( !$pfError && !$pfDone && !PF_DEBUG )
     {
         ipnlog(  'Verify source IP' );
-    
+
         if( !pmpro_pfValidIP( $_SERVER['REMOTE_ADDR'] ) )
         {
             $pfError = true;
             $pfErrMsg = PF_ERR_BAD_SOURCE_IP;
         }
-    }  
+    }
 
     //// Verify data received
     if( !$pfError )
     {
         ipnlog(  'Verify data received' );
-    
+
         $pfValid = pmpro_pfValidData( $pfHost, $pfParamString );
-    
+
         if( !$pfValid )
         {
             $pfError = true;
             $pfErrMsg = PF_ERR_BAD_ACCESS;
         }
     }
-        
+
     //// Check data against internal order
     if( !$pfError && !$pfDone )
     {
-       
+
         if( !pmpro_pfAmountsEqual( $pfData['amount_gross'], $morder->total) )
         {
             ipnlog(  'Amount Returned: '.$pfData['amount_gross']."\n Amount in Cart:".$total );
             $pfError = true;
             $pfErrMsg = PF_ERR_AMOUNT_MISMATCH;
         }
-        
+
     }
 
     //// Check status and update order
@@ -196,18 +196,18 @@
 
         switch( $pfData['payment_status'] )
         {
-            case 'COMPLETE':                
-               
+            case 'COMPLETE':
+
                 //update membership
                 if(pmpro_itnChangeMembershipLevel($transaction_id, $morder))
-                {                                   
-                    ipnlog("Checkout processed (" . $morder->code . ") success!");      
+                {
+                    ipnlog("Checkout processed (" . $morder->code . ") success!");
                 }
                 else
                 {
-                    ipnlog("ERROR: Couldn't change level for order (" . $morder->code . ").");      
-                }   
-                
+                    ipnlog("ERROR: Couldn't change level for order (" . $morder->code . ").");
+                }
+
                 break;
 
             case 'FAILED':
@@ -216,7 +216,7 @@
 
             case 'PENDING':
                 ipnlog("ERROR: ITN from PayFast for order (" . $morder->code . ") Pending.");
-                
+
                 break;
 
             default:
@@ -231,43 +231,43 @@
         ipnlog( 'Error occurred: '. $pfErrMsg );
     }
 
-    pmpro_ipnExit();   
-    
+    pmpro_ipnExit();
+
     /*
         Add message to ipnlog string
     */
     function ipnlog($s)
-    {       
-        global $logstr;     
+    {
+        global $logstr;
         $logstr .= "\t" . $s . "\n";
     }
-    
+
     /*
         Output ipnlog and exit;
     */
     function pmpro_ipnExit()
     {
         global $logstr;
-        
+
         //for log
         if($logstr)
         {
-            $logstr = "Logged On: " . date("m/d/Y H:i:s") . "\n" . $logstr . "\n-------------\n";       
-            
+            $logstr = "Logged On: " . date("m/d/Y H:i:s") . "\n" . $logstr . "\n-------------\n";
+
             //log?
             if( PF_DEBUG )
             {
-                echo $logstr;                
-                $loghandle = fopen(dirname(__FILE__) . "/../logs/payfast_itn.txt", "a+");   
+                echo $logstr;
+                $loghandle = fopen(dirname(__FILE__) . "/../logs/payfast_itn.txt", "a+");
                 fwrite($loghandle, $logstr);
                 fclose($loghandle);
             }
         }
-        
+
         exit;
     }
 
-      
+
     /*
         Change the membership level. We also update the membership order to include filtered valus.
     */
@@ -275,8 +275,8 @@
     {
         //filter for level
         $morder->membership_level = apply_filters("pmpro_ipnhandler_level", $morder->membership_level, $morder->user_id);
-                    
-        //fix expiration date       
+
+        //fix expiration date
         if(!empty($morder->membership_level->expiration_number))
         {
             $enddate = "'" . date("Y-m-d", strtotime("+ " . $morder->membership_level->expiration_number . " " . $morder->membership_level->expiration_period)) . "'";
@@ -285,17 +285,17 @@
         {
             $enddate = "NULL";
         }
-        
+
         //get discount code     (NOTE: but discount_code isn't set here. How to handle discount codes for PayPal Standard?)
         $use_discount_code = true;      //assume yes
         if(!empty($discount_code) && !empty($use_discount_code))
             $discount_code_id = $wpdb->get_var("SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . $discount_code . "' LIMIT 1");
         else
             $discount_code_id = "";
-        
+
         //set the start date to NOW() but allow filters
         $startdate = apply_filters("pmpro_checkout_start_date", "NOW()", $morder->user_id, $morder->membership_level);
-        
+
         //custom level to change user to
         $custom_level = array(
             'user_id' => $morder->user_id,
@@ -315,13 +315,13 @@
         if(!empty($pmpro_error))
         {
             echo $pmpro_error;
-            ipnlog($pmpro_error);               
-        }               
-        
+            ipnlog($pmpro_error);
+        }
+
         //change level and continue "checkout"
         if(pmpro_changeMembershipLevel($custom_level, $morder->user_id) !== false)
-        {                       
-            //update order status and transaction ids                   
+        {
+            //update order status and transaction ids
             $morder->status = "success";
             $morder->payment_transaction_id = $txn_id;
             if(!empty($_POST['subscr_id']))
@@ -329,13 +329,13 @@
             else
                 $morder->subscription_transaction_id = "";
             $morder->saveOrder();
-            
+
             //add discount code use
             if(!empty($discount_code) && !empty($use_discount_code))
             {
                 $wpdb->query("INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $discount_code_id . "', '" . $morder->user_id . "', '" . $morder->id . "', now())");
-            }                                   
-        
+            }
+
             //save first and last name fields
             if(!empty($_POST['first_name']))
             {
@@ -349,36 +349,36 @@
                 if(!empty($old_lastname))
                     update_user_meta($morder->user_id, "last_name", $_POST['last_name']);
             }
-                                                
+
             //hook
-            do_action("pmpro_after_checkout", $morder->user_id);                        
-        
+            do_action("pmpro_after_checkout", $morder->user_id);
+
             //setup some values for the emails
             if(!empty($morder))
-                $invoice = new MemberOrder($morder->id);                        
+                $invoice = new MemberOrder($morder->id);
             else
                 $invoice = NULL;
-        
+
             $user = get_userdata($morder->user_id);
             $user->membership_level = $morder->membership_level;        //make sure they have the right level info
-        
+
             //send email to member
-            $pmproemail = new PMProEmail();             
+            $pmproemail = new PMProEmail();
             $pmproemail->sendCheckoutEmail($user, $invoice);
-                                        
+
             //send email to admin
             $pmproemail = new PMProEmail();
             $pmproemail->sendCheckoutAdminEmail($user, $invoice);
-            
+
             return true;
         }
         else
             return false;
     }
-    
+
     /**
      * pfGetData
-     *  
+     *
      * @author Jonathan Smit (PayFast.co.za)
      */
     function pmpro_pfGetData()
@@ -399,7 +399,7 @@
 
     /**
      * pfValidSignature
-     * 
+     *
      * @author Jonathan Smit (PayFast.co.za)
      */
     function pmpro_pfValidSignature( $pfData = null, &$pfParamString = null )
@@ -420,7 +420,7 @@
         // Remove the last '&' from the parameter string
         $pfParamString = substr( $pfParamString, 0, -1 );
         $signature = md5( $pfParamString );
-        
+
         $result = ( $pfData['signature'] == $signature );
 
         ipnlog(  'Signature = '. ( $result ? 'valid' : 'invalid' ) );
@@ -432,7 +432,7 @@
      * pfValidData
      *
      * @author Jonathan Smit (PayFast.co.za)
-     * @param $pfHost String Hostname to use 
+     * @param $pfHost String Hostname to use
      * @param $pfParamString String Parameter string to send
      * @param $proxy String Address of proxy to use or NULL if no proxy
      */
@@ -449,7 +449,7 @@
 
             // Create default cURL object
             $ch = curl_init();
-        
+
             // Set cURL options - Use curl_setopt for freater PHP compatibility
             // Base settings
             curl_setopt( $ch, CURLOPT_USERAGENT, PF_USER_AGENT );  // Set user agent
@@ -457,7 +457,7 @@
             curl_setopt( $ch, CURLOPT_HEADER, false );             // Don't include header in output
             curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
             curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-            
+
             // Standard settings
             curl_setopt( $ch, CURLOPT_URL, $url );
             curl_setopt( $ch, CURLOPT_POST, true );
@@ -465,10 +465,11 @@
             curl_setopt( $ch, CURLOPT_TIMEOUT, PF_TIMEOUT );
             if( !empty( $pfProxy ) )
                 curl_setopt( $ch, CURLOPT_PROXY, $proxy );
-        
+
             // Execute CURL
             $response = curl_exec( $ch );
             curl_close( $ch );
+	        ipnlog( 'Curl used' );
         }
         // Use fsockopen
         else
@@ -477,25 +478,25 @@
             $header = '';
             $res = '';
             $headerDone = false;
-             
+
             // Construct Header
             $header = "POST /eng/query/validate HTTP/1.0\r\n";
             $header .= "Host: ". $pfHost ."\r\n";
             $header .= "User-Agent: ". PF_USER_AGENT ."\r\n";
             $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
             $header .= "Content-Length: " . strlen( $pfParamString ) . "\r\n\r\n";
-     
+
             // Connect to server
             $socket = fsockopen( 'ssl://'. $pfHost, 443, $errno, $errstr, PF_TIMEOUT );
-     
+
             // Send command to server
             fputs( $socket, $header . $pfParamString );
-     
+
             // Read the response from the server
             while( !feof( $socket ) )
             {
                 $line = fgets( $socket, 1024 );
-     
+
                 // Check if we are finished reading the header yet
                 if( strcmp( $line, "\r\n" ) == 0 )
                 {
@@ -509,7 +510,7 @@
                     $response .= $line;
                 }
             }
-            
+			ipnlog( 'fsockopen' );
         }
 
         ipnlog(  "Response:\n". print_r( $response, true ) );
@@ -528,7 +529,7 @@
      * pfValidIP
      *
      * @author Jonathan Smit (PayFast.co.za)
-     * @param $sourceIP String Source IP address 
+     * @param $sourceIP String Source IP address
      */
     function pmpro_pfValidIP( $sourceIP )
     {
@@ -563,15 +564,15 @@
 
     /**
      * pfAmountsEqual
-     * 
+     *
      * Checks to see whether the given amounts are equal using a proper floating
      * point comparison with an Epsilon which ensures that insignificant decimal
      * places are ignored in the comparison.
-     * 
+     *
      * eg. 100.00 is equal to 100.0001
      *
      * @author Jonathan Smit (PayFast.co.za)
-     * @param $amount1 Float 1st amount for comparison 
+     * @param $amount1 Float 1st amount for comparison
      * @param $amount2 Float 2nd amount for comparison
      */
     function pmpro_pfAmountsEqual( $amount1, $amount2 )

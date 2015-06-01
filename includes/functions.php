@@ -28,16 +28,16 @@ if(!function_exists("sornot"))
 	}
 }
 
-//set up wpdb for the tables we need
+//setup wpdb for the tables we need
 function pmpro_setDBTables()
 {
-	global $wpdb;
+	global $table_prefix, $wpdb;
 	$wpdb->hide_errors();
-	$wpdb->pmpro_membership_levels = $wpdb->prefix . 'pmpro_membership_levels';
-	$wpdb->pmpro_memberships_users = $wpdb->prefix . 'pmpro_memberships_users';
-	$wpdb->pmpro_memberships_categories = $wpdb->prefix . 'pmpro_memberships_categories';
-	$wpdb->pmpro_memberships_pages = $wpdb->prefix . 'pmpro_memberships_pages';
-	$wpdb->pmpro_membership_orders = $wpdb->prefix . 'pmpro_membership_orders';
+	$wpdb->pmpro_membership_levels = $table_prefix . 'pmpro_membership_levels';
+	$wpdb->pmpro_memberships_users = $table_prefix . 'pmpro_memberships_users';
+	$wpdb->pmpro_memberships_categories = $table_prefix . 'pmpro_memberships_categories';
+	$wpdb->pmpro_memberships_pages = $table_prefix . 'pmpro_memberships_pages';
+	$wpdb->pmpro_membership_orders = $table_prefix . 'pmpro_membership_orders';
 	$wpdb->pmpro_discount_codes = $wpdb->prefix . 'pmpro_discount_codes';
 	$wpdb->pmpro_discount_codes_levels = $wpdb->prefix . 'pmpro_discount_codes_levels';
 	$wpdb->pmpro_discount_codes_uses = $wpdb->prefix . 'pmpro_discount_codes_uses';
@@ -86,7 +86,14 @@ function pmpro_br2nl($text, $tags = "br")
 
 function pmpro_getOption($s, $force = false)
 {
-	if(get_option("pmpro_" . $s))
+	if(isset($_REQUEST[$s]) && !$force)
+	{
+		if(!is_array($_REQUEST[$s]))
+			return trim($_REQUEST[$s]);
+		else
+			return $_REQUEST[$s];
+	}
+	elseif(get_option("pmpro_" . $s))
 		return get_option("pmpro_" . $s);
 	else
 		return "";
@@ -94,9 +101,9 @@ function pmpro_getOption($s, $force = false)
 
 function pmpro_setOption($s, $v = NULL)
 {
-	//no value is given, set v to the p var
-	if($v === NULL && isset($_POST[$s]))
-		$v = $_POST[$s];
+	//no value is given, set v to the request var
+	if($v === NULL && isset($_REQUEST[$s]))
+		$v = $_REQUEST[$s];
 
 	if(is_array($v))
 		$v = implode(",", $v);
@@ -481,29 +488,29 @@ function pmpro_hasMembershipLevel($levels = NULL, $user_id = NULL)
 		{
 			$levels = array($levels);
 		}
-				
+
 		if(empty($membership_levels))
-		{			
+		{
 			//user has no levels just check if 0, L, or -L was sent in one of the levels
 			if(in_array(0, $levels, true) || in_array("0", $levels))
 				$return = true;
 			elseif(in_array("L", $levels) || in_array("l", $levels))
 				$return = (!empty($user_id) && $user_id == $current_user->ID);
 			elseif(in_array("-L", $levels) || in_array("-l", $levels))
-				$return = (empty($user_id) || $user_id != $current_user->ID);		
+				$return = (empty($user_id) || $user_id != $current_user->ID);
 		}
 		else
-		{			
+		{
 			foreach($levels as $level)
-			{				
+			{
 				if(strtoupper($level) == "L")
-				{					
+				{
 					//checking if user is logged in
 					if(!empty($user_id) && $user_id == $current_user->ID)
 						$return = true;
 				}
 				elseif(strtoupper($level) == "-L")
-				{					
+				{
 					//checking if user is logged out
 					if(empty($user_id) || $user_id != $current_user->ID)
 						$return = true;
@@ -525,13 +532,13 @@ function pmpro_hasMembershipLevel($levels = NULL, $user_id = NULL)
 							$found_level = true;
 						}
 					}
-										
+
 					if(is_numeric($level) && intval($level) < 0 && !$found_level) //checking for the absence of this level and they don't have it
 					{
 						$return = true;
-					}					
+					}
 					elseif(is_numeric($level) && intval($level) > 0 && $found_level) //checking for the presence of this level and they have it
-					{					
+					{
 						$return = true;
 					}
 					elseif(!is_numeric($level))	//if a level name was passed
@@ -1743,6 +1750,13 @@ function pmpro_is_ready()
 		elseif($gateway == "paypalstandard")
 		{
 			if(pmpro_getOption("gateway_environment") && pmpro_getOption("gateway_email"))
+				$pmpro_gateway_ready = true;
+			else
+				$pmpro_gateway_ready = false;
+		}
+		elseif($gateway == "payfast")
+		{
+			if(pmpro_getOption("gateway_environment") && pmpro_getOption("payfast_debug") && pmpro_getOption( "payfast_merchant_id") && pmpro_getOption( "payfast_merchant_key") )
 				$pmpro_gateway_ready = true;
 			else
 				$pmpro_gateway_ready = false;

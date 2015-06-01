@@ -82,6 +82,7 @@ require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_paypalexpress.php
 require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_paypalstandard.php");
 require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_stripe.php");
 require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_twocheckout.php");
+require_once(PMPRO_DIR . "/classes/gateways/class.pmprogateway_payfast.php");
 
 /*
 	Setup the DB and check for upgrades
@@ -123,7 +124,8 @@ function pmpro_gateways(){
 		'authorizenet' 		=> __('Authorize.net', 'pmpro'),
 		'braintree' 		=> __('Braintree Payments', 'pmpro'),
 		'twocheckout' 		=> __('2Checkout', 'pmpro'),
-		'cybersource' 		=> __('Cybersource', 'pmpro')
+		'cybersource' 		=> __('Cybersource', 'pmpro'),
+		'payfast'  => __('PayFast','pmpro')
 	);
 
 	return apply_filters( 'pmpro_gateways', $pmpro_gateways );
