@@ -13,6 +13,7 @@ function pmpro_setupAddonUpdateInfo()
 	add_filter('plugins_api', 'pmpro_plugins_api', 10, 3);
 	add_filter('pre_set_site_transient_update_plugins', 'pmpro_update_plugins_filter');
 	add_filter('http_request_args', 'pmpro_http_request_args_for_addons', 10, 2);
+	add_action('update_option_pmpro_license_key', 'pmpro_reset_update_plugins_cache', 10, 3);
 }
 add_action('init', 'pmpro_setupAddonUpdateInfo');
 
@@ -30,27 +31,35 @@ function pmpro_getAddons()
 	//if no addons locally, we need to hit the server
 	if(empty($addons) || !empty($_REQUEST['force-check']) || current_time('timestamp') > $addons_timestamp+86400)
 	{
-		//get em
-		$remote_addons = wp_remote_get(PMPRO_LICENSE_SERVER . "/addons/");
-		
+        /**
+         * Filter to change the timeout for this wp_remote_get() request.
+         *
+         * @since 1.8.5.1
+         *
+         * @param int $timeout The number of seconds before the request times out
+         */
+        $timeout = apply_filters("pmpro_get_addons_timeout", 5);
+
+        //get em
+		$remote_addons = wp_remote_get(PMPRO_LICENSE_SERVER . "/addons/", $timeout);
+
+        //make sure we have at least an array to pass back
+        if(empty($addons))
+            $addons = array();
+
 		//test response
-		if(empty($remote_addons['response']) || $remote_addons['response']['code'] != '200')
-		{
-			//error
-			pmpro_setMessage("Could not connect to the PMPro License Server to update addon information. Try again later.", "error");
-			
-			//make sure we have at least an array to pass back
-			if(empty($addons))
-				$addons = array();
-		}
-		else
-		{
-			//update addons in cache
-			$addons = json_decode(wp_remote_retrieve_body($remote_addons), true);
-			delete_option('pmpro_addons');
-			add_option("pmpro_addons", $addons, NULL, 'no');
-		}
-		
+        if(is_wp_error($remote_addons)) {
+            //error
+            pmpro_setMessage("Could not connect to the PMPro License Server to update addon information. Try again later.", "error");
+        }
+		elseif(!empty($r) && $r['response']['code'] == 200)
+        {
+            //update addons in cache
+            $addons = json_decode(wp_remote_retrieve_body($remote_addons), true);
+            delete_option('pmpro_addons');
+            add_option("pmpro_addons", $addons, NULL, 'no');
+        }
+
 		//save timestamp of last update
 		delete_option('pmpro_addons_timestamp');
 		add_option("pmpro_addons_timestamp", current_time('timestamp'), NULL, 'no');		
@@ -174,12 +183,6 @@ function pmpro_plugins_api($api, $action = '', $args = null)
 			
 	// Create a new stdClass object and populate it with our plugin information.
 	$api = pmpro_getPluginAPIObjectFromAddon($addon);
-	
-	//get license key if one is available
-	$key = get_option("pmpro_license_key", "");
-	if(!empty($key) && !empty($api->download_link))
-		$api->download_link = add_query_arg("key", $key, $api->download_link);
-	
 	return $api;
 }
 
@@ -208,6 +211,31 @@ function pmpro_getPluginAPIObjectFromAddon($addon)
 	$api->sections['changelog'] = isset( $addon['Changelog'] )      ? $addon['Changelog']      : '';
 	$api->download_link         = isset( $addon['Download'] )  		? $addon['Download']  	   : '';
 	$api->package        		= isset( $addon['Download'] )  		? $addon['Download']  	   : '';
-	
+
+    //get license key if one is available
+    $key = get_option("pmpro_license_key", "");
+    if(!empty($key) && !empty($api->download_link))
+        $api->download_link = add_query_arg("key", $key, $api->download_link);
+	if(!empty($key) && !empty($api->package))
+        $api->package = add_query_arg("key", $key, $api->package);
+
 	return $api;
+}
+
+/**
+ * Force update of plugin update data when the PMPro License key is updated
+ *
+ * @since 2.0
+ *
+ * @param array $args  Array of request args.
+ * @param string $url  The URL to be pinged.
+ * @return array $args Amended array of request args.
+ */
+function pmpro_reset_update_plugins_cache($option, $old_value, $value) 
+{
+	if($option == "pmpro_license_key")
+	{
+		delete_option('pmpro_addons_timestamp');
+		delete_site_transient('update_themes');
+	}
 }
