@@ -3,7 +3,7 @@
 Plugin Name: Paid Memberships Pro
 Plugin URI: http://www.paidmembershipspro.com
 Description: Plugin to Handle Memberships
-Version: 1.8.4.5
+Version: 1.8.5
 Author: Stranger Studios
 Author URI: http://www.strangerstudios.com
 */
@@ -13,7 +13,7 @@ Author URI: http://www.strangerstudios.com
 */
 
 //version constant
-define("PMPRO_VERSION", "1.8.4.5");
+define("PMPRO_VERSION", "1.8.5");
 
 //if the session has been started yet, start it (ignore if running from command line)
 if(defined('STDIN') )
@@ -41,6 +41,9 @@ require_once(PMPRO_DIR . "/includes/localization.php");			//localization functio
 require_once(PMPRO_DIR . "/includes/lib/name-parser.php");		//parses "Jason Coleman" into firstname=>Jason, lastname=>Coleman
 require_once(PMPRO_DIR . "/includes/functions.php");			//misc functions used by the plugin
 require_once(PMPRO_DIR . "/includes/upgradecheck.php");			//database and other updates
+
+if(!defined('PMPRO_LICENSE_SERVER'))
+	require_once(PMPRO_DIR . "/includes/license.php");			//defines location of addons data and licenses
 
 require_once(PMPRO_DIR . "/scheduled/crons.php");				//crons for expiring members, sending expiration emails, etc
 
@@ -93,6 +96,10 @@ global $wpdb;
 if(is_admin())
 	pmpro_checkForUpgrades();
 
+//load plugin updater
+if(is_admin())
+	require_once(PMPRO_DIR . "/includes/addons.php");
+	
 /*
 	Definitions
 */
