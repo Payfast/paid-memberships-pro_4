@@ -14,28 +14,28 @@
 	global $pmpro_stripe_error, $pmpro_braintree_error, $pmpro_payflow_error, $pmpro_twocheckout_error, $wp_version;
 	
 	if(isset($_REQUEST['edit']))
-		$edit = $_REQUEST['edit'];	
+		$edit = intval($_REQUEST['edit']);
 	else
 		$edit = false;
 	if(isset($_REQUEST['copy']))
-		$copy = $_REQUEST['copy'];
+		$copy = intval($_REQUEST['copy']);
 	if(isset($_REQUEST['s']))
-		$s = $_REQUEST['s'];
+		$s = sanitize_text_field($_REQUEST['s']);
 	else
 		$s = "";
 	
 	if(isset($_REQUEST['action']))
-		$action = $_REQUEST['action'];
+		$action = sanitize_text_field($_REQUEST['action']);
 	else
 		$action = false;
 		
 	if(isset($_REQUEST['saveandnext']))
-		$saveandnext = $_REQUEST['saveandnext'];
+		$saveandnext = intval($_REQUEST['saveandnext']);
 
 	if(isset($_REQUEST['saveid']))
-		$saveid = $_REQUEST['saveid'];
+		$saveid = intval($_REQUEST['saveid']);
 	if(isset($_REQUEST['deleteid']))
-		$deleteid = $_REQUEST['deleteid'];
+		$deleteid = intval($_REQUEST['deleteid']);
 
 	if($action == "save_membershiplevel")
 	{
@@ -155,7 +155,7 @@
 	{
 		global $wpdb;
 
-		$ml_id = $_REQUEST['deleteid'];
+		$ml_id = intval($_REQUEST['deleteid']);
 	  
 		if($ml_id > 0)
 		{	  
@@ -280,7 +280,7 @@
 			
 		?>
 		<form action="" method="post" enctype="multipart/form-data">
-			<input name="saveid" type="hidden" value="<?php echo $edit?>" />
+			<input name="saveid" type="hidden" value="<?php echo esc_attr($edit); ?>" />
 			<input type="hidden" name="action" value="save_membershiplevel" />
 			<table class="form-table">
 			<tbody>
@@ -571,7 +571,7 @@
 		<p class="search-box">
 			<label class="screen-reader-text" for="post-search-input"><?php _e('Search Levels', 'pmpro');?>:</label>
 			<input type="hidden" name="page" value="pmpro-membershiplevels" />
-			<input id="post-search-input" type="text" value="<?php echo $s?>" name="s" size="30" />
+			<input id="post-search-input" type="text" value="<?php echo esc_attr($s); ?>" name="s" size="30" />
 			<input class="button" type="submit" value="<?php _e('Search Levels', 'pmpro');?>" id="search-submit" />
 		</p>
 	</form>	
@@ -657,7 +657,7 @@
 			</td>
 			<td><?php if($level->allow_signups) { ?><a href="<?php echo pmpro_url("checkout", "?level=" . $level->id);?>"><?php _e('Yes', 'pmpro');?></a><?php } else { ?><?php _e('No', 'pmpro');?><?php } ?></td>
 
-			<td><a title="<?php _e('edit','pmpro'); ?>" href="admin.php?page=pmpro-membershiplevels&edit=<?php echo $level->id?>" class="button-primary"><?php _e('edit','pmpro'); ?></a>&nbsp;<a title="<?php _e('copy','pmpro'); ?>" href="admin.php?page=pmpro-membershiplevels&copy=<?php echo $level->id?>&edit=-1" class="button-secondary"><?php _e('copy','pmpro'); ?></a>&nbsp;<a title="<?php _e('delete','pmpro'); ?>" href="javascript: askfirst('<?php printf(__("Are you sure you want to delete membership level %s? All subscriptions will be cancelled.", "pmpro"), $level->name);?>','admin.php?page=pmpro-membershiplevels&action=delete_membership_level&deleteid=<?php echo $level->id?>'); void(0);" class="button-secondary"><?php _e('delete','pmpro'); ?></a></td>
+			<td><a title="<?php _e('edit','pmpro'); ?>" href="admin.php?page=pmpro-membershiplevels&edit=<?php echo $level->id?>" class="button-primary"><?php _e('edit','pmpro'); ?></a>&nbsp;<a title="<?php _e('copy','pmpro'); ?>" href="admin.php?page=pmpro-membershiplevels&copy=<?php echo $level->id?>&edit=-1" class="button-secondary"><?php _e('copy','pmpro'); ?></a>&nbsp;<a title="<?php _e('delete','pmpro'); ?>" href="javascript: askfirst('<?php echo str_replace("'", "\'", sprintf("Are you sure you want to delete membership level %s? All subscriptions will be cancelled.", "pmpro"), $level->name);?>','admin.php?page=pmpro-membershiplevels&action=delete_membership_level&deleteid=<?php echo $level->id?>'); void(0);" class="button-secondary"><?php _e('delete','pmpro'); ?></a></td>
 		</tr>
 		<?php
 			}

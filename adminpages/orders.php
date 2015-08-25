@@ -8,52 +8,52 @@
 	//vars
 	global $wpdb;
 	if(isset($_REQUEST['s']))
-		$s = trim($_REQUEST['s']);
+		$s = sanitize_text_field(trim($_REQUEST['s']));
 	else
 		$s = "";
 
 	if(isset($_REQUEST['l']))
-		$l = $_REQUEST['l'];
+		$l = intval($_REQUEST['l']);
 	else
 		$l = false;
 
 	if(isset($_REQUEST['start-month']))
-		$start_month = $_REQUEST['start-month'];
+		$start_month = intval($_REQUEST['start-month']);
 	else
 		$start_month = "1";
 
 	if(isset($_REQUEST['start-day']))
-		$start_day = $_REQUEST['start-day'];
+		$start_day = intval($_REQUEST['start-day']);
 	else
 		$start_day = "1";
 
 	if(isset($_REQUEST['start-year']))
-		$start_year = $_REQUEST['start-year'];
+		$start_year = intval($_REQUEST['start-year']);
 	else
 		$start_year = date("Y");
 
 	if(isset($_REQUEST['end-month']))
-		$end_month = $_REQUEST['end-month'];
+		$end_month = intval($_REQUEST['end-month']);
 	else
 		$end_month = date("n");
 
 	if(isset($_REQUEST['end-day']))
-		$end_day = $_REQUEST['end-day'];
+		$end_day = intval($_REQUEST['end-day']);
 	else
 		$end_day = date("j");
 
 	if(isset($_REQUEST['end-year']))
-		$end_year = $_REQUEST['end-year'];
+		$end_year = intval($_REQUEST['end-year']);
 	else
 		$end_year = date("Y");
 
 	if(isset($_REQUEST['predefined-date']))
-		$predefined_date = $_REQUEST['predefined-date'];
+		$predefined_date = sanitize_text_field($_REQUEST['predefined-date']);
 	else
 		$predefined_date = "This Month";
 
 	if(isset($_REQUEST['status']))
-		$status = $_REQUEST['status'];
+		$status = sanitize_text_field($_REQUEST['status']);
 	else
 		$status = "";
 
@@ -97,57 +97,57 @@
 			$order = new MemberOrder();
 
 		//update values
-		if(!in_array("code", $read_only_fields))
+		if(!in_array("code", $read_only_fields) && isset($_POST['code']))
 			$order->code = $_POST['code'];
-		if(!in_array("user_id", $read_only_fields))
+		if(!in_array("user_id", $read_only_fields) && isset($_POST['user_id']))
 			$order->user_id = intval($_POST['user_id']);
-		if(!in_array("membership_id", $read_only_fields))
+		if(!in_array("membership_id", $read_only_fields) && isset($_POST['membership_id']))
 			$order->membership_id = intval($_POST['membership_id']);
-		if(!in_array("billing_name", $read_only_fields))
+		if(!in_array("billing_name", $read_only_fields) && isset($_POST['billing_name']))
 			$order->billing->name = stripslashes($_POST['billing_name']);
-		if(!in_array("billing_street", $read_only_fields))
+		if(!in_array("billing_street", $read_only_fields) && isset($_POST['billing_street']))
 			$order->billing->street = stripslashes($_POST['billing_street']);
-		if(!in_array("billing_city", $read_only_fields))
+		if(!in_array("billing_city", $read_only_fields) && isset($_POST['billing_city']))
 			$order->billing->city = stripslashes($_POST['billing_city']);
-		if(!in_array("billing_state", $read_only_fields))
+		if(!in_array("billing_state", $read_only_fields) && isset($_POST['billing_state']))
 			$order->billing->state = stripslashes($_POST['billing_state']);
-		if(!in_array("billing_zip", $read_only_fields))
+		if(!in_array("billing_zip", $read_only_fields) && isset($_POST['billing_zip']))
 			$order->billing->zip = $_POST['billing_zip'];
-		if(!in_array("billing_country", $read_only_fields))
+		if(!in_array("billing_country", $read_only_fields) && isset($_POST['billing_country']))
 			$order->billing->country = stripslashes($_POST['billing_country']);
-		if(!in_array("billing_phone", $read_only_fields))
+		if(!in_array("billing_phone", $read_only_fields) && isset($_POST['billing_phone']))
 			$order->billing->phone = $_POST['billing_phone'];
-		if(!in_array("subtotal", $read_only_fields))
+		if(!in_array("subtotal", $read_only_fields) && isset($_POST['subtotal']))
 			$order->subtotal = $_POST['subtotal'];
-		if(!in_array("tax", $read_only_fields))
+		if(!in_array("tax", $read_only_fields) && isset($_POST['tax']))
 			$order->tax = $_POST['tax'];
-		if(!in_array("couponamount", $read_only_fields))
+		if(!in_array("couponamount", $read_only_fields) && isset($_POST['couponamount']))
 			$order->couponamount = $_POST['couponamount'];
-		if(!in_array("total", $read_only_fields))
+		if(!in_array("total", $read_only_fields) && isset($_POST['total']))
 			$order->total = $_POST['total'];
-		if(!in_array("payment_type", $read_only_fields))
+		if(!in_array("payment_type", $read_only_fields) && isset($_POST['payment_type']))
 			$order->payment_type = $_POST['payment_type'];
-		if(!in_array("cardtype", $read_only_fields))
+		if(!in_array("cardtype", $read_only_fields) && isset($_POST['cardtype']))
 			$order->cardtype = $_POST['cardtype'];
-		if(!in_array("accountnumber", $read_only_fields))
+		if(!in_array("accountnumber", $read_only_fields) && isset($_POST['accountnumber']))
 			$order->accountnumber = $_POST['accountnumber'];
-		if(!in_array("expirationmonth", $read_only_fields))
+		if(!in_array("expirationmonth", $read_only_fields) && isset($_POST['expirationmonth']))
 			$order->expirationmonth = $_POST['expirationmonth'];
-		if(!in_array("expirationyear", $read_only_fields))
+		if(!in_array("expirationyear", $read_only_fields) && isset($_POST['expirationyear']))
 			$order->expirationyear = $_POST['expirationyear'];
-		if(!in_array("ExpirationDate", $read_only_fields))
+		if(!in_array("ExpirationDate", $read_only_fields) && isset($_POST['ExpirationDate']))
 			$order->ExpirationDate = $order->expirationmonth . $order->expirationyear;
-		if(!in_array("status", $read_only_fields))
+		if(!in_array("status", $read_only_fields) && isset($_POST['status']))
 			$order->status = stripslashes($_POST['status']);
-		if(!in_array("gateway", $read_only_fields))
+		if(!in_array("gateway", $read_only_fields) && isset($_POST['gateway']))
 			$order->gateway = $_POST['gateway'];
-		if(!in_array("gateway_environment", $read_only_fields))
+		if(!in_array("gateway_environment", $read_only_fields) && isset($_POST['gateway_environment']))
 			$order->gateway_environment = $_POST['gateway_environment'];
-		if(!in_array("payment_transaction_id", $read_only_fields))
+		if(!in_array("payment_transaction_id", $read_only_fields) && isset($_POST['payment_transaction_id']))
 			$order->payment_transaction_id = $_POST['payment_transaction_id'];
-		if(!in_array("subscription_transaction_id", $read_only_fields))
+		if(!in_array("subscription_transaction_id", $read_only_fields) && isset($_POST['subscription_transaction_id']))
 			$order->subscription_transaction_id = $_POST['subscription_transaction_id'];
-		if(!in_array("notes", $read_only_fields))
+		if(!in_array("notes", $read_only_fields) && isset($_POST['notes']))
 			$order->notes = stripslashes($_POST['notes']);
 
 		//affiliate stuff
@@ -513,8 +513,8 @@
 							}
 						?>
 						</select>
-						<input name="ts_day" type="text" size="2" value="<?php echo $day?>" />
-						<input name="ts_year" type="text" size="4" value="<?php echo $year?>" />
+						<input name="ts_day" type="text" size="2" value="<?php echo esc_attr($day);?>" />
+						<input name="ts_year" type="text" size="4" value="<?php echo esc_attr($year);?>" />
 						<?php } ?>
 					</td>
 				</tr>
@@ -617,8 +617,8 @@
 				<?php } ?>
 			</select>
 
-			<input id='start-day' name="start-day" type="text" size="2" value="<?php echo $start_day?>" />
-			<input id='start-year' name="start-year" type="text" size="4" value="<?php echo $start_year?>" />
+			<input id='start-day' name="start-day" type="text" size="2" value="<?php echo esc_attr($start_day);?>" />
+			<input id='start-year' name="start-year" type="text" size="4" value="<?php echo esc_attr($start_year);?>" />
 
 
 			<span id="to"><?php _ex('To', 'Dropdown label', 'pmpro')?></span>
@@ -630,8 +630,8 @@
 			</select>
 
 
-			<input id='end-day' name="end-day" type="text" size="2" value="<?php echo $end_day?>" />
-			<input id='end-year' name="end-year" type="text" size="4" value="<?php echo $end_year?>" />
+			<input id='end-day' name="end-day" type="text" size="2" value="<?php echo esc_attr($end_day);?>" />
+			<input id='end-year' name="end-year" type="text" size="4" value="<?php echo esc_attr($end_year);?>" />
 
 			<span id="filterby"><?php _ex('filter by ', 'Dropdown label', 'pmpro')?></span>
 
@@ -776,7 +776,7 @@
 	<p class="search-box">
 		<label class="hidden" for="post-search-input"><?php _e('Search Orders', 'pmpro');?>:</label>
 		<input type="hidden" name="page" value="pmpro-orders" />
-		<input id="post-search-input" type="text" value="<?php echo $s?>" name="s"/>
+		<input id="post-search-input" type="text" value="<?php echo esc_attr($s);?>" name="s"/>
 		<input class="button" type="submit" value="<?php _e('Search Orders', 'pmpro');?>"/>
 	</p>
 
