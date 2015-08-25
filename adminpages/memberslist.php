@@ -13,7 +13,7 @@
 		$s = "";
 
 	if(isset($_REQUEST['l']))
-		$l = intval($_REQUEST['l']);
+		$l = sanitize_text_field($_REQUEST['l']);
 	else
 		$l = false;
 
@@ -61,7 +61,17 @@
 		if(isset($_REQUEST['limit']))
 			$limit = intval($_REQUEST['limit']);
 		else
-			$limit = 15;
+		{
+			/**
+			 * Filter to set the default number of items to show per page
+			 * on the Members List page in the admin.
+			 *
+			 * @since 1.8.4.5
+			 *
+			 * @param int $limit The number of items to show per page.
+			 */
+			$limit = apply_filters('pmpro_memberslist_per_page', 15);
+		}
 
 		$end = $pn * $limit;
 		$start = $end - $limit;

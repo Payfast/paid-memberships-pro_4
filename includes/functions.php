@@ -653,7 +653,7 @@ function pmpro_changeMembershipLevel($level, $user_id = NULL, $old_level_status 
 
     //should we cancel their gateway subscriptions?
     $pmpro_cancel_previous_subscriptions = true;
-    if(isset($_REQUEST['cancel_membership']) && $_REQUEST['cancel_memberhip'] == false)
+    if(isset($_REQUEST['cancel_membership']) && $_REQUEST['cancel_membership'] == false)
         $pmpro_cancel_previous_subscriptions = false;
     $pmpro_cancel_previous_subscriptions = apply_filters("pmpro_cancel_previous_subscriptions", $pmpro_cancel_previous_subscriptions);
 
@@ -1819,6 +1819,10 @@ function pmpro_is_ready()
 			else
 				$pmpro_gateway_ready = false;
 		}
+		elseif($gateway == "check")
+		{
+			$pmpro_gateway_ready = true;
+		}
 		else
 		{
 			$pmpro_gateway_ready = false;
@@ -1839,9 +1843,24 @@ function pmpro_is_ready()
 
 	//now check both
 	if($pmpro_gateway_ready && $pmpro_pages_ready)
-		return true;
+		$r = true;
 	else
-		return false;
+		$r = false;
+	
+	/**
+	 * Filter to determine if PMPro setup is complete or
+	 * if notices or warnings need to be shown in the PMPro settings.
+	 *
+	 * Note: The filter should return true or false and also set
+	 * the $pmpro_level_ready, $pmpro_gateway_ready, $pmpro_pages_ready global variabls.
+	 * 
+	 * @since 1.8.4.5
+	 *
+	 * @param bool $r ready?	 
+	 */	
+	$r = apply_filters('pmpro_is_ready', $r);
+	
+	return $r;
 }
 
 /**
